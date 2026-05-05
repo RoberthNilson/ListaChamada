@@ -61,6 +61,15 @@ const credenciais = {
 
 // Função para conectar ao MongoDB
 const connectDB = async () => {
+    if (!process.env.MONGODB_URI) {
+        console.warn('⚠️ MONGODB_URI não definida. A conexão com MongoDB será ignorada.');
+        return;
+    }
+
+    if (mongoose.connection.readyState === 1) {
+        return;
+    }
+
     try {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Conectado ao MongoDB Atlas com sucesso!');
@@ -83,7 +92,6 @@ const connectDB = async () => {
         console.log('✅ Dados inicializados com sucesso!');
     } catch (error) {
         console.error('❌ Erro ao conectar MongoDB:', error);
-        process.exit(1);
     }
 };
 
@@ -248,17 +256,11 @@ app.post('/api/gerar-relatorio-excel', async (req, res) => {
     }
 });
 
-// Iniciar servidor
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`\n========================================`);
-    console.log(`🚀 SERVIDOR INICIADO COM SUCESSO!`);
-    console.log(`========================================`);
-    console.log(`📍 Acesse: http://localhost:${PORT}`);
-    console.log(`========================================\n`);
-});
+if (process.env.MONGODB_URI) {
+    connectDB();
+} else {
+    console.warn('⚠️ Variável de ambiente MONGODB_URI não encontrada. O banco não será conectado no momento.');
+}
 
-// Conectar ao MongoDB
-connectDB();
-
+// Exportar app para execução no Vercel
 module.exports = app;
