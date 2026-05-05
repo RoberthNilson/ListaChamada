@@ -5,7 +5,8 @@
   "main": "api/server.js",
   "scripts": {
     "start": "node api/server.js",
-    "dev": "nodemon api/server.js"
+    "dev": "nodemon api/server.js",
+    "build": "echo \"No build step required\""
   },
   "dependencies": {
     "express": "^4.18.2",
