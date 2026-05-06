@@ -94,6 +94,171 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+app.post('/api/admin/registrar-gestor', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+        return res.status(400).json({ error: 'Usuário e senha são obrigatórios.' });
+    }
+
+    try {
+        await User.findOneAndUpdate(
+            { username },
+            { username, senha: password, sala: 'admin', cargo: 'admin' },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao registrar gestor:', error);
+        res.status(500).json({ error: 'Erro ao registrar gestor.' });
+    }
+});
+
+// Rotas de administração
+app.get('/api/admin/salas', async (req, res) => {
+    try {
+        const salas = await Sala.find({}).lean();
+        res.json(salas);
+    } catch (error) {
+        console.error('Erro ao buscar salas admin:', error);
+        res.status(500).json({ error: 'Erro ao buscar salas' });
+    }
+});
+
+app.post('/api/admin/criar-sala', async (req, res) => {
+    const {
+        id,
+        nome,
+        lider,
+        liderSenha,
+        viceLider,
+        viceLiderSenha,
+        secretario,
+        secretarioSenha,
+        alunos = []
+    } = req.body;
+
+    if (!id || !nome || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
+        return res.status(400).json({ error: 'Todos os campos da sala e dos cargos são obrigatórios.' });
+    }
+
+    try {
+        await Sala.findOneAndUpdate(
+            { id },
+            {
+                id,
+                nome,
+                lider,
+                viceLider,
+                secretario,
+                alunos
+            },
+            { upsert: true, new: true }
+        );
+
+        await User.findOneAndUpdate(
+            { username: lider },
+            { username: lider, senha: liderSenha, sala: id, cargo: 'lider' },
+            { upsert: true, new: true }
+        );
+
+        await User.findOneAndUpdate(
+            { username: viceLider },
+            { username: viceLider, senha: viceLiderSenha, sala: id, cargo: 'viceLider' },
+            { upsert: true, new: true }
+        );
+
+        await User.findOneAndUpdate(
+            { username: secretario },
+            { username: secretario, senha: secretarioSenha, sala: id, cargo: 'secretario' },
+            { upsert: true, new: true }
+        );
+
+        for (const alunoNome of alunos) {
+            const alunoTrim = alunoNome.trim();
+            if (!alunoTrim) continue;
+
+            await Sala.updateOne(
+                { id },
+                { $addToSet: { alunos: alunoTrim } }
+            );
+
+            await User.findOneAndUpdate(
+                { username: alunoTrim },
+                { username: alunoTrim, senha: alunoTrim, sala: id, cargo: 'aluno' },
+                { upsert: true, new: true }
+            );
+        }
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao criar sala admin:', error);
+        res.status(500).json({ error: 'Erro ao criar sala' });
+    }
+});
+
+app.post('/api/admin/adicionar-aluno', async (req, res) => {
+    const { sala, username, senha } = req.body;
+    if (!sala || !username || !senha) {
+        return res.status(400).json({ error: 'Sala, nome do aluno e senha são obrigatórios.' });
+    }
+
+    try {
+        const salaDoc = await Sala.findOne({ id: sala });
+        if (!salaDoc) {
+            return res.status(404).json({ error: 'Sala não encontrada.' });
+        }
+
+        if (salaDoc.alunos.includes(username)) {
+            return res.status(400).json({ error: 'Aluno já cadastrado nesta sala.' });
+        }
+
+        salaDoc.alunos.push(username);
+        await salaDoc.save();
+
+        await User.findOneAndUpdate(
+            { username },
+            { username, senha, sala, cargo: 'aluno' },
+            { upsert: true, new: true }
+        );
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Erro ao adicionar aluno admin:', error);
+        res.status(500).json({ error: 'Erro ao adicionar aluno' });
+    }
+});
+
+app.post('/api/admin/relatorio-faltas', async (req, res) => {
+    const { sala, data } = req.body;
+
+    if (!sala || !data) {
+        return res.status(400).json({ error: 'Sala e data são obrigatórias.' });
+    }
+
+    try {
+        const dataInicio = new Date(data);
+        dataInicio.setHours(0, 0, 0, 0);
+        const dataFim = new Date(data);
+        dataFim.setHours(23, 59, 59, 999);
+
+        const faltas = await Falta.find({
+            salaId: sala,
+            data: { $gte: dataInicio, $lte: dataFim }
+        }).sort({ dataRegistro: -1 });
+
+        res.json({
+            faltas: faltas.map(falta => ({
+                aluno: falta.aluno,
+                registradoPor: falta.registradoPor,
+                dataRegistro: falta.dataRegistro
+            }))
+        });
+    } catch (error) {
+        console.error('Erro ao gerar relatório admin:', error);
+        res.status(500).json({ error: 'Erro ao buscar relatório de faltas' });
+    }
+});
+
 // Rota para carregar dados da sala
 app.post('/api/carregar-chamada', async (req, res) => {
     const { sala } = req.body;

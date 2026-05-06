@@ -26,7 +26,129 @@
                     </div>
                     <button type="submit" class="btn-login">Entrar</button>
                 </form>
+                <div class="login-actions">
+                    <button id="showRegisterAdminBtn" class="btn-secondary">Registrar Gestor</button>
+                </div>
+                <div id="registerAdminForm" class="hidden-form">
+                    <div class="input-group">
+                        <label for="registerAdminUsername">Usuário do Gestor</label>
+                        <input type="text" id="registerAdminUsername" placeholder="Nome do gestor">
+                    </div>
+                    <div class="input-group">
+                        <label for="registerAdminPassword">Senha do Gestor</label>
+                        <input type="password" id="registerAdminPassword" placeholder="Senha do gestor">
+                    </div>
+                    <button id="registerAdminBtn" class="btn-primary">Criar Gestor</button>
+                    <button id="cancelRegisterAdminBtn" class="btn-secondary">Cancelar</button>
+                </div>
                 <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+
+        <!-- Tela de Administração -->
+        <div id="adminScreen" class="screen">
+            <div class="header">
+                <h2>Área de Administração</h2>
+                <div class="user-info">
+                    <span id="userNameAdmin"></span>
+                    <span id="userCargoAdmin"></span>
+                    <button id="logoutBtnAdmin" class="btn-logout">Sair</button>
+                </div>
+            </div>
+
+            <div class="content admin-content">
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h3>Cadastro de Sala e Usuários</h3>
+                    </div>
+                    <div class="admin-grid">
+                        <div class="input-group">
+                            <label for="adminSalaId">ID da Sala</label>
+                            <input type="text" id="adminSalaId" placeholder="ex: sala1" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminSalaNome">Nome da Sala</label>
+                            <input type="text" id="adminSalaNome" placeholder="Ex: 1º Ano A" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminLider">Presidente / Líder</label>
+                            <input type="text" id="adminLider" placeholder="Usuário do presidente" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminLiderSenha">Senha do Presidente</label>
+                            <input type="password" id="adminLiderSenha" placeholder="Senha do presidente" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminViceLider">Vice-Presidente / Vice</label>
+                            <input type="text" id="adminViceLider" placeholder="Usuário do vice" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminViceLiderSenha">Senha do Vice</label>
+                            <input type="password" id="adminViceLiderSenha" placeholder="Senha do vice" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminSecretario">Secretário</label>
+                            <input type="text" id="adminSecretario" placeholder="Usuário do secretário" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminSecretarioSenha">Senha do Secretário</label>
+                            <input type="password" id="adminSecretarioSenha" placeholder="Senha do secretário" required>
+                        </div>
+                        <div class="input-group full-width">
+                            <label for="adminAlunosLista">Alunos da Sala (um por linha)</label>
+                            <textarea id="adminAlunosLista" rows="4" placeholder="Nome do aluno 1\nNome do aluno 2"></textarea>
+                        </div>
+                    </div>
+                    <button id="adminCriarSalaBtn" class="btn-primary">Criar / Atualizar Sala</button>
+                    <div id="adminSalaMessage" class="error-message"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h3>Adicionar Aluno</h3>
+                    </div>
+                    <div class="admin-grid">
+                        <div class="input-group">
+                            <label for="adminAlunoSala">Sala</label>
+                            <select id="adminAlunoSala"></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminAlunoNome">Nome do Aluno</label>
+                            <input type="text" id="adminAlunoNome" placeholder="Nome do aluno" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminAlunoSenha">Senha do Aluno</label>
+                            <input type="password" id="adminAlunoSenha" placeholder="Senha do aluno" required>
+                        </div>
+                    </div>
+                    <button id="adminAdicionarAlunoBtn" class="btn-primary">Adicionar Aluno</button>
+                    <div id="adminAlunoMessage" class="error-message"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h3>Relatório de Faltas por Sala</h3>
+                    </div>
+                    <div class="admin-grid">
+                        <div class="input-group">
+                            <label for="adminRelatorioSala">Sala</label>
+                            <select id="adminRelatorioSala"></select>
+                        </div>
+                        <div class="input-group">
+                            <label for="adminRelatorioData">Data da Chamada</label>
+                            <input type="date" id="adminRelatorioData">
+                        </div>
+                    </div>
+                    <button id="adminVerRelatorioBtn" class="btn-secondary">Ver Faltas</button>
+                    <div id="adminRelatorioContent"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h3>Salas Cadastradas</h3>
+                    </div>
+                    <div id="adminSalasList"></div>
+                </div>
             </div>
         </div>
 

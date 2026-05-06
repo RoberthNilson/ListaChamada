@@ -100,6 +100,23 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
+.login-actions {
+    margin-top: 15px;
+}
+
+.hidden-form {
+    display: none;
+    margin-top: 15px;
+}
+
+.hidden-form.active {
+    display: block;
+}
+
+.hidden-form .btn-secondary {
+    margin-top: 10px;
+}
+
 .error-message {
     color: #e74c3c;
     text-align: center;
@@ -158,11 +175,51 @@ body {
     gap: 20px;
 }
 
-.chamada-section, .relatorio-section {
+.chamada-section, .relatorio-section, .admin-section {
     background: white;
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.admin-content {
+    display: grid;
+    gap: 20px;
+}
+
+.admin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.admin-grid .full-width {
+    grid-column: span 2;
+}
+
+.admin-card {
+    background: #f8f9fa;
+    padding: 18px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.admin-card strong {
+    display: block;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.admin-card p,
+.admin-card ul {
+    color: #4d4d4d;
+    font-size: 14px;
+    margin: 6px 0;
+}
+
+.admin-card ul {
+    padding-left: 18px;
 }
 
 .section-header {

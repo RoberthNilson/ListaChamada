@@ -8,23 +8,65 @@ let faltasAtuais = {};
 // Elementos DOM
 const loginScreen = document.getElementById('loginScreen');
 const mainScreen = document.getElementById('mainScreen');
+const adminScreen = document.getElementById('adminScreen');
 const loginForm = document.getElementById('loginForm');
 const logoutBtn = document.getElementById('logoutBtn');
+const logoutBtnAdmin = document.getElementById('logoutBtnAdmin');
+const showRegisterAdminBtn = document.getElementById('showRegisterAdminBtn');
+const registerAdminForm = document.getElementById('registerAdminForm');
+const registerAdminUsername = document.getElementById('registerAdminUsername');
+const registerAdminPassword = document.getElementById('registerAdminPassword');
+const registerAdminBtn = document.getElementById('registerAdminBtn');
+const cancelRegisterAdminBtn = document.getElementById('cancelRegisterAdminBtn');
 const alunosList = document.getElementById('alunosList');
 const salaTitle = document.getElementById('salaTitle');
 const userName = document.getElementById('userName');
 const userCargo = document.getElementById('userCargo');
+const userNameAdmin = document.getElementById('userNameAdmin');
+const userCargoAdmin = document.getElementById('userCargoAdmin');
 const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
 const dataChamada = document.getElementById('dataChamada');
 const loginError = document.getElementById('loginError');
 
+const adminSalaId = document.getElementById('adminSalaId');
+const adminSalaNome = document.getElementById('adminSalaNome');
+const adminLider = document.getElementById('adminLider');
+const adminLiderSenha = document.getElementById('adminLiderSenha');
+const adminViceLider = document.getElementById('adminViceLider');
+const adminViceLiderSenha = document.getElementById('adminViceLiderSenha');
+const adminSecretario = document.getElementById('adminSecretario');
+const adminSecretarioSenha = document.getElementById('adminSecretarioSenha');
+const adminAlunosLista = document.getElementById('adminAlunosLista');
+const adminCriarSalaBtn = document.getElementById('adminCriarSalaBtn');
+const adminSalaMessage = document.getElementById('adminSalaMessage');
+
+const adminAlunoSala = document.getElementById('adminAlunoSala');
+const adminAlunoNome = document.getElementById('adminAlunoNome');
+const adminAlunoSenha = document.getElementById('adminAlunoSenha');
+const adminAdicionarAlunoBtn = document.getElementById('adminAdicionarAlunoBtn');
+const adminAlunoMessage = document.getElementById('adminAlunoMessage');
+
+const adminRelatorioSala = document.getElementById('adminRelatorioSala');
+const adminRelatorioData = document.getElementById('adminRelatorioData');
+const adminVerRelatorioBtn = document.getElementById('adminVerRelatorioBtn');
+const adminRelatorioContent = document.getElementById('adminRelatorioContent');
+const adminSalasList = document.getElementById('adminSalasList');
+
 // Configurar data atual
 dataChamada.valueAsDate = new Date();
+adminRelatorioData.valueAsDate = new Date();
 
 // Eventos
 loginForm.addEventListener('submit', fazerLogin);
 logoutBtn.addEventListener('click', fazerLogout);
+logoutBtnAdmin.addEventListener('click', fazerLogout);
+showRegisterAdminBtn.addEventListener('click', mostrarRegistroGestor);
+registerAdminBtn.addEventListener('click', registrarGestor);
+cancelRegisterAdminBtn.addEventListener('click', fecharRegistroGestor);
 gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
+adminCriarSalaBtn.addEventListener('click', criarOuAtualizarSalaAdmin);
+adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunoAdmin);
+adminVerRelatorioBtn.addEventListener('click', mostrarRelatorioAdmin);
 
 // Funções de Autenticação
 async function fazerLogin(e) {
@@ -45,15 +87,21 @@ async function fazerLogin(e) {
             usuarioAtual = data.username;
             cargoAtual = data.cargo;
             salaAtual = data.sala;
-            
-            userName.textContent = usuarioAtual;
-            userCargo.textContent = getCargoNome(data.cargo);
-            salaTitle.textContent = data.nomeSala;
-            
-            await carregarDados();
-            
-            loginScreen.classList.remove('active');
-            mainScreen.classList.add('active');
+
+            if (cargoAtual === 'admin') {
+                userNameAdmin.textContent = usuarioAtual;
+                userCargoAdmin.textContent = '👩‍💼 Gestor(a)';
+                await carregarAdminDados();
+                loginScreen.classList.remove('active');
+                adminScreen.classList.add('active');
+            } else {
+                userName.textContent = usuarioAtual;
+                userCargo.textContent = getCargoNome(data.cargo);
+                salaTitle.textContent = data.nomeSala;
+                await carregarDados();
+                loginScreen.classList.remove('active');
+                mainScreen.classList.add('active');
+            }
         } else {
             loginError.textContent = data.message;
         }
@@ -67,9 +115,231 @@ function getCargoNome(cargo) {
     const cargos = {
         'lider': '👑 Líder',
         'viceLider': '⭐ Vice-Líder',
-        'secretario': '📝 Secretário'
+        'secretario': '📝 Secretário',
+        'admin': '👩‍💼 Gestor(a)'
     };
     return cargos[cargo] || cargo;
+}
+
+function mostrarRegistroGestor() {
+    registerAdminForm.classList.add('active');
+    showRegisterAdminBtn.classList.add('hidden');
+}
+
+function fecharRegistroGestor() {
+    registerAdminForm.classList.remove('active');
+    showRegisterAdminBtn.classList.remove('hidden');
+    registerAdminUsername.value = '';
+    registerAdminPassword.value = '';
+    loginError.textContent = '';
+}
+
+async function registrarGestor(event) {
+    event.preventDefault();
+    const username = registerAdminUsername.value.trim();
+    const password = registerAdminPassword.value.trim();
+
+    if (!username || !password) {
+        loginError.textContent = 'Preencha usuário e senha para criar o gestor.';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/registrar-gestor', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            loginError.textContent = data.error || 'Erro ao registrar gestor.';
+            return;
+        }
+
+        loginError.textContent = 'Gestor criado com sucesso! Faça login agora.';
+        loginError.style.color = '#27ae60';
+        fecharRegistroGestor();
+    } catch (error) {
+        console.error('Erro ao registrar gestor:', error);
+        loginError.textContent = 'Erro ao registrar gestor.';
+        loginError.style.color = '#e74c3c';
+    }
+}
+
+async function carregarAdminDados() {
+    try {
+        const response = await fetch('/api/admin/salas');
+        const salas = await response.json();
+        const salasArray = Array.isArray(salas) ? salas : [];
+
+        atualizarAdminSalaSelects(salasArray);
+        renderizarSalasAdmin(salasArray);
+        adminSalaMessage.textContent = '';
+        adminAlunoMessage.textContent = '';
+        adminRelatorioContent.innerHTML = '<div class="sem-faltas">Selecione uma sala e data para ver o relatório.</div>';
+    } catch (error) {
+        console.error('Erro ao carregar dados do administrador:', error);
+        adminSalaMessage.textContent = 'Erro ao carregar dados de administração';
+    }
+}
+
+function atualizarAdminSalaSelects(salas) {
+    const options = salas.map(sala => `<option value="${sala.id}">${sala.nome} (${sala.id})</option>`).join('');
+    adminAlunoSala.innerHTML = options;
+    adminRelatorioSala.innerHTML = options;
+}
+
+function renderizarSalasAdmin(salas) {
+    if (salas.length === 0) {
+        adminSalasList.innerHTML = '<div class="sem-faltas">Nenhuma sala cadastrada.</div>';
+        return;
+    }
+
+    adminSalasList.innerHTML = salas.map(sala => {
+        const alunosTexto = sala.alunos && sala.alunos.length > 0
+            ? sala.alunos.map(nome => `<li>${nome}</li>`).join('')
+            : '<li>Nenhum aluno cadastrado</li>';
+
+        return `
+            <div class="admin-card">
+                <strong>${sala.nome} (${sala.id})</strong>
+                <p>Presidente: ${sala.lider}</p>
+                <p>Vice-Presidente: ${sala.viceLider}</p>
+                <p>Secretário: ${sala.secretario}</p>
+                <p><strong>Alunos:</strong></p>
+                <ul>${alunosTexto}</ul>
+            </div>
+        `;
+    }).join('');
+}
+
+async function criarOuAtualizarSalaAdmin() {
+    const salaId = adminSalaId.value.trim();
+    const nomeSala = adminSalaNome.value.trim();
+    const lider = adminLider.value.trim();
+    const liderSenha = adminLiderSenha.value.trim();
+    const viceLider = adminViceLider.value.trim();
+    const viceLiderSenha = adminViceLiderSenha.value.trim();
+    const secretario = adminSecretario.value.trim();
+    const secretarioSenha = adminSecretarioSenha.value.trim();
+    const alunos = adminAlunosLista.value
+        .split(/\r?\n/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+    if (!salaId || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
+        adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/criar-sala', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: salaId,
+                nome: nomeSala,
+                lider,
+                liderSenha,
+                viceLider,
+                viceLiderSenha,
+                secretario,
+                secretarioSenha,
+                alunos
+            })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            adminSalaMessage.textContent = data.error || 'Erro ao criar ou atualizar a sala.';
+            return;
+        }
+
+        adminSalaMessage.textContent = 'Sala criada/atualizada com sucesso!';
+        adminSalaMessage.style.color = '#27ae60';
+        await carregarAdminDados();
+    } catch (error) {
+        console.error('Erro ao criar sala:', error);
+        adminSalaMessage.textContent = 'Erro ao criar ou atualizar a sala.';
+        adminSalaMessage.style.color = '#e74c3c';
+    }
+}
+
+async function adicionarAlunoAdmin() {
+    const sala = adminAlunoSala.value;
+    const alunoNome = adminAlunoNome.value.trim();
+    const alunoSenha = adminAlunoSenha.value.trim();
+
+    if (!sala || !alunoNome || !alunoSenha) {
+        adminAlunoMessage.textContent = 'Preencha a sala, nome e senha do aluno.';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/adicionar-aluno', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sala, username: alunoNome, senha: alunoSenha })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            adminAlunoMessage.textContent = data.error || 'Erro ao adicionar aluno.';
+            return;
+        }
+
+        adminAlunoMessage.textContent = 'Aluno adicionado com sucesso!';
+        adminAlunoMessage.style.color = '#27ae60';
+        adminAlunoNome.value = '';
+        adminAlunoSenha.value = '';
+        await carregarAdminDados();
+    } catch (error) {
+        console.error('Erro ao adicionar aluno:', error);
+        adminAlunoMessage.textContent = 'Erro ao adicionar aluno.';
+        adminAlunoMessage.style.color = '#e74c3c';
+    }
+}
+
+async function mostrarRelatorioAdmin() {
+    const sala = adminRelatorioSala.value;
+    const data = adminRelatorioData.value;
+
+    if (!sala || !data) {
+        adminRelatorioContent.innerHTML = '<div class="sem-faltas">Selecione sala e data para ver o relatório.</div>';
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/relatorio-faltas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sala, data })
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+            adminRelatorioContent.innerHTML = `<div class="sem-faltas">${payload.error || 'Erro ao buscar relatório.'}</div>`;
+            return;
+        }
+
+        if (!Array.isArray(payload.faltas) || payload.faltas.length === 0) {
+            adminRelatorioContent.innerHTML = '<div class="sem-faltas">Nenhuma falta registrada nesta data.</div>';
+            return;
+        }
+
+        adminRelatorioContent.innerHTML = payload.faltas.map(falta => `
+            <div class="falta-item">
+                <strong>📌 ${falta.aluno}</strong>
+                <p><small>👔 Registrado por: ${falta.registradoPor}</small></p>
+                <p><small>🕒 ${new Date(falta.dataRegistro).toLocaleString('pt-BR')}</small></p>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Erro ao consultar relatório admin:', error);
+        adminRelatorioContent.innerHTML = '<div class="sem-faltas">Erro ao buscar relatório.</div>';
+    }
 }
 
 function fazerLogout() {
@@ -78,8 +348,11 @@ function fazerLogout() {
     salaAtual = null;
     loginScreen.classList.add('active');
     mainScreen.classList.remove('active');
+    adminScreen.classList.remove('active');
     loginForm.reset();
     loginError.textContent = '';
+    adminSalaMessage.textContent = '';
+    adminAlunoMessage.textContent = '';
 }
 
 // Carregar dados da sala
