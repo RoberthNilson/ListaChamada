@@ -16,6 +16,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Modelos
 const Falta = require('../models/Falta');
 const Sala = require('../models/Sala');
+const User = require('../models/User');
 
 // Dados pré-definidos das salas
 const salas = {
@@ -48,23 +49,8 @@ const salas = {
     }
 };
 
-const hasMongoConnection = () => Boolean(process.env.MONGODB_URI);
-
-const ensureMongoConnection = async () => {
-    if (!hasMongoConnection()) {
-        return false;
-    }
-
-    if (mongoose.connection.readyState === 1) {
-        return true;
-    }
-
-    await connectDB();
-    return mongoose.connection.readyState === 1;
-};
-
-// Credenciais de acesso
-const credenciais = {
+// Credenciais de acesso (movidas para MongoDB)
+const users = {
     'Ângelo': { senha: 'angelo456', sala: 'sala1', cargo: 'lider' },
     'mariaoliveira': { senha: 'vice123', sala: 'sala1', cargo: 'viceLider' },
     'pedrosantos': { senha: 'secre123', sala: 'sala1', cargo: 'secretario' },
@@ -106,6 +92,20 @@ const connectDB = async () => {
                 console.log(`📚 Sala ${salaData.nome} criada no MongoDB`);
             }
         }
+        
+        // Inicializar usuários no banco
+        for (const [username, data] of Object.entries(users)) {
+            const existe = await User.findOne({ username });
+            if (!existe) {
+                await User.create({
+                    username,
+                    senha: data.senha,
+                    sala: data.sala,
+                    cargo: data.cargo
+                });
+                console.log(`👤 Usuário ${username} criado no MongoDB`);
+            }
+        }
         console.log('✅ Dados inicializados com sucesso!');
     } catch (error) {
         console.error('❌ Erro ao conectar MongoDB:', error);
@@ -113,39 +113,38 @@ const connectDB = async () => {
 };
 
 // Rota de login
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { username, password } = req.body;
     
-    if (credenciais[username] && credenciais[username].senha === password) {
-        const usuario = credenciais[username];
-        res.json({
-            success: true,
-            cargo: usuario.cargo,
-            sala: usuario.sala,
-            nomeSala: salas[usuario.sala].nome,
-            username: username
-        });
-    } else {
-        res.json({ success: false, message: 'Usuário ou senha inválidos!' });
+    try {
+        const user = await User.findOne({ username });
+        if (user && user.senha === password) {
+            const salaDoc = await Sala.findOne({ id: user.sala });
+            res.json({
+                success: true,
+                cargo: user.cargo,
+                sala: user.sala,
+                nomeSala: salaDoc ? salaDoc.nome : 'Sala não encontrada',
+                username: username
+            });
+        } else {
+            res.json({ success: false, message: 'Usuário ou senha inválidos!' });
+        }
+    } catch (error) {
+        console.error('Erro no login:', error);
+        res.status(500).json({ error: 'Erro no login' });
     }
 });
 
 // Rota para carregar dados da sala
 app.post('/api/carregar-chamada', async (req, res) => {
     const { sala } = req.body;
-
-    if (!salas[sala]) {
-        return res.status(400).json({ error: 'Sala inválida' });
-    }
-
-    if (!await ensureMongoConnection()) {
-        return res.json({
-            alunos: salas[sala].alunos,
-            faltas: {}
-        });
-    }
     
     try {
+        const salaDoc = await Sala.findOne({ id: sala });
+        if (!salaDoc) {
+            return res.status(404).json({ error: 'Sala não encontrada' });
+        }
         const faltas = await Falta.find({ salaId: sala });
         const faltasFormatadas = {};
         
@@ -161,7 +160,7 @@ app.post('/api/carregar-chamada', async (req, res) => {
         });
         
         res.json({
-            alunos: salas[sala].alunos,
+            alunos: salaDoc.alunos,
             faltas: faltasFormatadas
         });
     } catch (error) {
@@ -173,18 +172,18 @@ app.post('/api/carregar-chamada', async (req, res) => {
 // Rota para registrar falta
 app.post('/api/registrar-falta', async (req, res) => {
     const { sala, aluno, data, registradoPor } = req.body;
-
-    if (!salas[sala]) {
-        return res.status(400).json({ error: 'Sala inválida' });
-    }
-
-    if (!await ensureMongoConnection()) {
-        return res.status(503).json({
-            error: 'Banco de dados não configurado. Defina MONGODB_URI para registrar faltas.'
-        });
-    }
     
     try {
+        const salaDoc = await Sala.findOne({ id: sala });
+        if (!salaDoc) {
+            return res.status(404).json({ error: 'Sala não encontrada' });
+        }
+        
+        // Verificar se o aluno pertence à sala
+        if (!salaDoc.alunos.includes(aluno)) {
+            return res.status(400).json({ error: 'Aluno não pertence à sala' });
+        }
+        
         // Verificar se já existe falta para este aluno nesta data
         const dataInicio = new Date(data);
         dataInicio.setHours(0, 0, 0, 0);
@@ -210,7 +209,7 @@ app.post('/api/registrar-falta', async (req, res) => {
         });
         
         console.log(`\n📝 FALTA REGISTRADA NO MONGODB:`);
-        console.log(`   🏫 Sala: ${salas[sala].nome}`);
+        console.log(`   🏫 Sala: ${salaDoc.nome}`);
         console.log(`   👨‍🎓 Aluno: ${aluno}`);
         console.log(`   📅 Data: ${data}`);
         console.log(`   👔 Registrado por: ${registradoPor}`);
@@ -225,18 +224,13 @@ app.post('/api/registrar-falta', async (req, res) => {
 // Rota para gerar relatório Excel
 app.post('/api/gerar-relatorio-excel', async (req, res) => {
     const { sala, data } = req.body;
-
-    if (!salas[sala]) {
-        return res.status(400).json({ error: 'Sala inválida' });
-    }
-
-    if (!await ensureMongoConnection()) {
-        return res.status(503).json({
-            error: 'Banco de dados não configurado. Defina MONGODB_URI para gerar o relatório.'
-        });
-    }
     
     try {
+        const salaDoc = await Sala.findOne({ id: sala });
+        if (!salaDoc) {
+            return res.status(404).json({ error: 'Sala não encontrada' });
+        }
+        
         const dataInicio = new Date(data);
         dataInicio.setHours(0, 0, 0, 0);
         const dataFim = new Date(data);
@@ -255,7 +249,7 @@ app.post('/api/gerar-relatorio-excel', async (req, res) => {
         if (faltas.length === 0) {
             excelData.push([
                 data,
-                salas[sala].nome,
+                salaDoc.nome,
                 'Nenhuma falta registrada',
                 '-',
                 '-'
@@ -264,7 +258,7 @@ app.post('/api/gerar-relatorio-excel', async (req, res) => {
             faltas.forEach(falta => {
                 excelData.push([
                     data,
-                    salas[sala].nome,
+                    salaDoc.nome,
                     falta.aluno,
                     falta.registradoPor,
                     new Date(falta.dataRegistro).toLocaleString('pt-BR')
@@ -294,7 +288,7 @@ app.post('/api/gerar-relatorio-excel', async (req, res) => {
         res.send(buffer);
         
         console.log(`\n📊 RELATÓRIO EXCEL GERADO:`);
-        console.log(`   🏫 Sala: ${salas[sala].nome}`);
+        console.log(`   🏫 Sala: ${salaDoc.nome}`);
         console.log(`   📅 Data: ${data}`);
         console.log(`   📊 Total de faltas: ${faltas.length}`);
         
