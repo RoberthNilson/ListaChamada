@@ -33,36 +33,38 @@ const connectDB = async () => {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Conectado ao MongoDB Atlas com sucesso!');
         
-        // Inicializar salas no banco
+        // Sincronizar salas no banco (criar ou atualizar)
         for (const [id, salaData] of Object.entries(salas)) {
-            const existe = await Sala.findOne({ id });
-            if (!existe) {
-                await Sala.create({
+            await Sala.findOneAndUpdate(
+                { id },
+                {
                     id: id,
                     nome: salaData.nome,
                     lider: salaData.lider,
                     viceLider: salaData.viceLider,
                     secretario: salaData.secretario,
                     alunos: salaData.alunos
-                });
-                console.log(`📚 Sala ${salaData.nome} criada no MongoDB`);
-            }
+                },
+                { upsert: true, new: true }
+            );
+            console.log(`📚 Sala ${salaData.nome} sincronizada no MongoDB`);
         }
         
-        // Inicializar usuários no banco
+        // Sincronizar usuários no banco (criar ou atualizar)
         for (const [username, data] of Object.entries(users)) {
-            const existe = await User.findOne({ username });
-            if (!existe) {
-                await User.create({
+            await User.findOneAndUpdate(
+                { username },
+                {
                     username,
                     senha: data.senha,
                     sala: data.sala,
                     cargo: data.cargo
-                });
-                console.log(`👤 Usuário ${username} criado no MongoDB`);
-            }
+                },
+                { upsert: true, new: true }
+            );
+            console.log(`👤 Usuário ${username} sincronizado no MongoDB`);
         }
-        console.log('✅ Dados inicializados com sucesso!');
+        console.log('✅ Dados sincronizados com sucesso!');
     } catch (error) {
         console.error('❌ Erro ao conectar MongoDB:', error);
     }
