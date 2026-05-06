@@ -167,9 +167,9 @@ app.post('/api/admin/criar-sala', async (req, res) => {
 });
 
 app.post('/api/admin/adicionar-aluno', async (req, res) => {
-    const { sala, username, senha } = req.body;
-    if (!sala || !username || !senha) {
-        return res.status(400).json({ error: 'Sala, nome do aluno e senha são obrigatórios.' });
+    const { sala, username } = req.body;
+    if (!sala || !username) {
+        return res.status(400).json({ error: 'Sala e nome do aluno são obrigatórios.' });
     }
 
     try {
@@ -187,7 +187,7 @@ app.post('/api/admin/adicionar-aluno', async (req, res) => {
 
         await User.findOneAndUpdate(
             { username },
-            { username, senha, sala, cargo: 'aluno' },
+            { username, senha: username, sala, cargo: 'aluno' },
             { upsert: true, new: true }
         );
 

@@ -36,7 +36,6 @@ const adminSalaMessage = document.getElementById('adminSalaMessage');
 
 const adminAlunoSala = document.getElementById('adminAlunoSala');
 const adminAlunoNome = document.getElementById('adminAlunoNome');
-const adminAlunoSenha = document.getElementById('adminAlunoSenha');
 const adminAdicionarAlunoBtn = document.getElementById('adminAdicionarAlunoBtn');
 const adminAlunoMessage = document.getElementById('adminAlunoMessage');
 
@@ -225,10 +224,9 @@ async function criarOuAtualizarSalaAdmin() {
 async function adicionarAlunoAdmin() {
     const sala = adminAlunoSala.value;
     const alunoNome = adminAlunoNome.value.trim();
-    const alunoSenha = adminAlunoSenha.value.trim();
 
-    if (!sala || !alunoNome || !alunoSenha) {
-        adminAlunoMessage.textContent = 'Preencha a sala, nome e senha do aluno.';
+    if (!sala || !alunoNome) {
+        adminAlunoMessage.textContent = 'Preencha a sala e o nome do aluno.';
         return;
     }
 
@@ -236,7 +234,7 @@ async function adicionarAlunoAdmin() {
         const response = await fetch('/api/admin/adicionar-aluno', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sala, username: alunoNome, senha: alunoSenha })
+            body: JSON.stringify({ sala, username: alunoNome })
         });
 
         const data = await response.json();
