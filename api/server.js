@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const XLSX = require('xlsx');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Modelos
 const Falta = require('../models/Falta');
@@ -44,6 +46,21 @@ const salas = {
         alunos: ['Wagner Silva', 'Xavier Lima', 'Yara Santos', 'Zeca Oliveira', 'Alice Marques',
                  'Bernardo Rocha', 'Camila Ferreira', 'Diego Costa', 'Elisa Martins', 'Fernando Lima']
     }
+};
+
+const hasMongoConnection = () => Boolean(process.env.MONGODB_URI);
+
+const ensureMongoConnection = async () => {
+    if (!hasMongoConnection()) {
+        return false;
+    }
+
+    if (mongoose.connection.readyState === 1) {
+        return true;
+    }
+
+    await connectDB();
+    return mongoose.connection.readyState === 1;
 };
 
 // Credenciais de acesso
@@ -116,6 +133,17 @@ app.post('/api/login', (req, res) => {
 // Rota para carregar dados da sala
 app.post('/api/carregar-chamada', async (req, res) => {
     const { sala } = req.body;
+
+    if (!salas[sala]) {
+        return res.status(400).json({ error: 'Sala inválida' });
+    }
+
+    if (!await ensureMongoConnection()) {
+        return res.json({
+            alunos: salas[sala].alunos,
+            faltas: {}
+        });
+    }
     
     try {
         const faltas = await Falta.find({ salaId: sala });
@@ -145,6 +173,16 @@ app.post('/api/carregar-chamada', async (req, res) => {
 // Rota para registrar falta
 app.post('/api/registrar-falta', async (req, res) => {
     const { sala, aluno, data, registradoPor } = req.body;
+
+    if (!salas[sala]) {
+        return res.status(400).json({ error: 'Sala inválida' });
+    }
+
+    if (!await ensureMongoConnection()) {
+        return res.status(503).json({
+            error: 'Banco de dados não configurado. Defina MONGODB_URI para registrar faltas.'
+        });
+    }
     
     try {
         // Verificar se já existe falta para este aluno nesta data
@@ -187,6 +225,16 @@ app.post('/api/registrar-falta', async (req, res) => {
 // Rota para gerar relatório Excel
 app.post('/api/gerar-relatorio-excel', async (req, res) => {
     const { sala, data } = req.body;
+
+    if (!salas[sala]) {
+        return res.status(400).json({ error: 'Sala inválida' });
+    }
+
+    if (!await ensureMongoConnection()) {
+        return res.status(503).json({
+            error: 'Banco de dados não configurado. Defina MONGODB_URI para gerar o relatório.'
+        });
+    }
     
     try {
         const dataInicio = new Date(data);
@@ -260,6 +308,17 @@ if (process.env.MONGODB_URI) {
     connectDB();
 } else {
     console.warn('⚠️ Variável de ambiente MONGODB_URI não encontrada. O banco não será conectado no momento.');
+}
+
+if (require.main === module) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+        console.log('\n========================================');
+        console.log('🚀 SERVIDOR INICIADO COM SUCESSO!');
+        console.log('========================================');
+        console.log(`📍 Acesse: http://localhost:${PORT}`);
+        console.log('========================================\n');
+    });
 }
 
 // Exportar app para execução no Vercel
