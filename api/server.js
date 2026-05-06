@@ -178,7 +178,41 @@ app.post('/api/registrar-falta', async (req, res) => {
         res.status(500).json({ error: 'Erro ao registrar falta' });
     }
 });
-
+// Rota para obter relatório em JSON (mobile-friendly)
+app.post('/api/relatorio-json', async (req, res) => {
+    const { sala, data } = req.body;
+    
+    try {
+        const salaDoc = await Sala.findOne({ id: sala });
+        if (!salaDoc) {
+            return res.status(404).json({ error: 'Sala não encontrada' });
+        }
+        
+        const dataInicio = new Date(data);
+        dataInicio.setHours(0, 0, 0, 0);
+        const dataFim = new Date(data);
+        dataFim.setHours(23, 59, 59, 999);
+        
+        const faltas = await Falta.find({
+            salaId: sala,
+            data: { $gte: dataInicio, $lte: dataFim }
+        }).sort({ dataRegistro: -1 });
+        
+        res.json({
+            sala: salaDoc.nome,
+            data: data,
+            totalFaltas: faltas.length,
+            faltas: faltas.map(falta => ({
+                aluno: falta.aluno,
+                registradoPor: falta.registradoPor,
+                dataRegistro: new Date(falta.dataRegistro).toLocaleString('pt-BR')
+            }))
+        });
+    } catch (error) {
+        console.error('Erro ao obter relatório:', error);
+        res.status(500).json({ error: 'Erro ao obter relatório' });
+    }
+});
 // Rota para gerar relatório Excel
 app.post('/api/gerar-relatorio-excel', async (req, res) => {
     const { sala, data } = req.body;

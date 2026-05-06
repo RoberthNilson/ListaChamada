@@ -339,3 +339,125 @@ body {
         flex: 1;
     }
 }
+
+/* Mobile */
+@media (max-width: 600px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .login-box {
+        padding: 25px;
+        margin: 50px auto;
+        max-width: 95%;
+    }
+    
+    .logo h1 {
+        font-size: 22px;
+    }
+    
+    .header {
+        padding: 15px;
+        gap: 10px;
+    }
+    
+    .header h2 {
+        font-size: 18px;
+    }
+    
+    .user-info {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .user-info span {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+    
+    .chamada-section, .relatorio-section {
+        padding: 15px;
+    }
+    
+    .aluno-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .aluno-nome {
+        width: 100%;
+        font-size: 14px;
+    }
+    
+    .btn-falta {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    .falta-registrada {
+        margin-left: 0;
+        display: block;
+        margin-top: 5px;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .section-header h3 {
+        font-size: 16px;
+        width: 100%;
+    }
+    
+    .chamada-controls {
+        width: 100%;
+        flex-direction: column;
+    }
+    
+    .chamada-controls input {
+        width: 100%;
+    }
+    
+    .btn-primary, .btn-secondary {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    
+    #relatorioContent {
+        max-height: 400px;
+    }
+    
+    .alunos-list {
+        max-height: 400px;
+    }
+    
+    /* Tabela responsiva para mobile */
+    .relatorio-table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: collapse;
+    }
+    
+    .relatorio-table th,
+    .relatorio-table td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .relatorio-table th {
+        background: #667eea;
+        color: white;
+        font-weight: 600;
+    }
+    
+    .relatorio-table tr:nth-child(even) {
+        background: #f9f9f9;
+    }
+}
