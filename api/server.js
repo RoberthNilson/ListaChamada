@@ -32,39 +32,6 @@ const connectDB = async () => {
     try {
         await mongoose.connect(process.env.MONGODB_URI);
         console.log('✅ Conectado ao MongoDB Atlas com sucesso!');
-        
-        // Sincronizar salas no banco (criar ou atualizar)
-        for (const [id, salaData] of Object.entries(salas)) {
-            await Sala.findOneAndUpdate(
-                { id },
-                {
-                    id: id,
-                    nome: salaData.nome,
-                    lider: salaData.lider,
-                    viceLider: salaData.viceLider,
-                    secretario: salaData.secretario,
-                    alunos: salaData.alunos
-                },
-                { upsert: true, new: true }
-            );
-            console.log(`📚 Sala ${salaData.nome} sincronizada no MongoDB`);
-        }
-        
-        // Sincronizar usuários no banco (criar ou atualizar)
-        for (const [username, data] of Object.entries(users)) {
-            await User.findOneAndUpdate(
-                { username },
-                {
-                    username,
-                    senha: data.senha,
-                    sala: data.sala,
-                    cargo: data.cargo
-                },
-                { upsert: true, new: true }
-            );
-            console.log(`👤 Usuário ${username} sincronizado no MongoDB`);
-        }
-        console.log('✅ Dados sincronizados com sucesso!');
     } catch (error) {
         console.error('❌ Erro ao conectar MongoDB:', error);
     }
@@ -78,9 +45,12 @@ app.post('/api/login', async (req, res) => {
         const user = await User.findOne({ username });
         if (user && user.senha === password) {
             const salaDoc = await Sala.findOne({ id: user.sala });
+            const cargoRaw = String(user.cargo || '').trim().toLowerCase();
+            const cargoNormalizado = cargoRaw === 'adimin' ? 'admin' : cargoRaw;
+
             res.json({
                 success: true,
-                cargo: user.cargo,
+                cargo: cargoNormalizado,
                 sala: user.sala,
                 nomeSala: salaDoc ? salaDoc.nome : 'Sala não encontrada',
                 username: username

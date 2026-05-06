@@ -79,7 +79,7 @@ async function fazerLogin(e) {
             cargoAtual = data.cargo;
             salaAtual = data.sala;
 
-            if (cargoAtual === 'admin') {
+            if (isAdminCargo(cargoAtual)) {
                 userNameAdmin.textContent = usuarioAtual;
                 userCargoAdmin.textContent = '👩‍💼 Gestor(a)';
                 await carregarAdminDados();
@@ -87,7 +87,7 @@ async function fazerLogin(e) {
                 adminScreen.classList.add('active');
             } else {
                 userName.textContent = usuarioAtual;
-                userCargo.textContent = getCargoNome(data.cargo);
+                userCargo.textContent = getCargoNome(cargoAtual);
                 salaTitle.textContent = data.nomeSala;
                 await carregarDados();
                 loginScreen.classList.remove('active');
@@ -102,14 +102,24 @@ async function fazerLogin(e) {
     }
 }
 
+function isAdminCargo(cargo) {
+    const valor = String(cargo || '').trim().toLowerCase();
+    return valor === 'admin' || valor === 'adimin' || valor === 'gestor' || valor === 'administrador';
+}
+
 function getCargoNome(cargo) {
+    const valor = String(cargo || '').trim().toLowerCase();
     const cargos = {
         'lider': '👑 Líder',
-        'viceLider': '⭐ Vice-Líder',
+        'vicelider': '⭐ Vice-Líder',
+        'vice': '⭐ Vice-Líder',
         'secretario': '📝 Secretário',
-        'admin': '👩‍💼 Gestor(a)'
+        'admin': '👩‍💼 Gestor(a)',
+        'adimin': '👩‍💼 Gestor(a)',
+        'gestor': '👩‍💼 Gestor(a)',
+        'administrador': '👩‍💼 Gestor(a)'
     };
-    return cargos[cargo] || cargo;
+    return cargos[valor] || cargo;
 }
 
 async function carregarAdminDados() {
