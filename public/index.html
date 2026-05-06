@@ -42,10 +42,9 @@
             </div>
 
             <div class="content admin-content">
-                <!-- Notificações de relatórios recebidos -->
                 <div class="admin-section">
                     <div class="section-header">
-                        <h3>📬 Relatórios Recebidos</h3>
+                        <h3>📬 Relatórios Recebidos dos Presidentes</h3>
                     </div>
                     <div id="adminNotificacoes"></div>
                 </div>
@@ -72,7 +71,7 @@
                             <input type="password" id="adminLiderSenha" placeholder="Senha do presidente" required>
                         </div>
                         <div class="input-group">
-                            <label for="adminViceLider">Vice-Presidente / Vice</label>
+                            <label for="adminViceLider">Vice-Presidente</label>
                             <input type="text" id="adminViceLider" placeholder="Usuário do vice" required>
                         </div>
                         <div class="input-group">
@@ -88,8 +87,8 @@
                             <input type="password" id="adminSecretarioSenha" placeholder="Senha do secretário" required>
                         </div>
                     </div>
-                    <button id="adminCriarSalaBtn" class="btn-primary">Criar / Atualizar Sala</button>
-                    <div id="adminSalaMessage" class="error-message"></div>
+                    <button id="adminCriarSalaBtn">Criar / Atualizar Sala</button>
+                    <div id="adminSalaMessage"></div>
                 </div>
 
                 <div class="admin-section">
@@ -103,11 +102,11 @@
                         </div>
                         <div class="input-group full-width">
                             <label for="adminAlunosLista">Lista de Alunos (um por linha)</label>
-                            <textarea id="adminAlunosLista" rows="4" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
+                            <textarea id="adminAlunosLista" rows="4" placeholder="Nome do aluno 1&#10;Nome do aluno 2"></textarea>
                         </div>
                     </div>
-                    <button id="adminAdicionarAlunoBtn" class="btn-primary">Adicionar Alunos</button>
-                    <div id="adminAlunoMessage" class="error-message"></div>
+                    <button id="adminAdicionarAlunoBtn">Adicionar Alunos</button>
+                    <div id="adminAlunoMessage"></div>
                 </div>
 
                 <div class="admin-section">
@@ -121,14 +120,9 @@
                     <div class="section-header">
                         <h3>Deletar Sala</h3>
                     </div>
-                    <div class="admin-grid">
-                        <div class="input-group">
-                            <label for="adminDeletarSala">Sala</label>
-                            <select id="adminDeletarSala"></select>
-                        </div>
-                    </div>
-                    <button id="adminDeletarSalaBtn" class="btn-danger">Deletar Sala</button>
-                    <div id="adminDeletarMessage" class="error-message"></div>
+                    <select id="adminDeletarSala"></select>
+                    <button id="adminDeletarSalaBtn">Deletar Sala</button>
+                    <div id="adminDeletarMessage"></div>
                 </div>
             </div>
         </div>
@@ -152,16 +146,13 @@
                             <input type="date" id="dataChamada">
                         </div>
                     </div>
-                    
-                    <div class="alunos-list" id="alunosList">
-                        <!-- Lista de alunos será inserida aqui -->
-                    </div>
+                    <div id="alunosList"></div>
                 </div>
 
                 <div class="relatorio-section">
                     <div class="section-header">
                         <h3>Registro de Faltas</h3>
-                        <button id="gerarRelatorioBtn" class="btn-secondary">📤 Enviar Relatório ao Admin</button>
+                        <button id="gerarRelatorioBtn">📤 Enviar Relatório ao Admin</button>
                     </div>
                     <div id="relatorioContent"></div>
                 </div>
