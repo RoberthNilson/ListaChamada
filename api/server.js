@@ -166,10 +166,10 @@ app.post('/api/admin/criar-sala', async (req, res) => {
     }
 });
 
-app.post('/api/admin/adicionar-aluno', async (req, res) => {
-    const { sala, username } = req.body;
-    if (!sala || !username) {
-        return res.status(400).json({ error: 'Sala e nome do aluno são obrigatórios.' });
+app.delete('/api/admin/deletar-sala', async (req, res) => {
+    const { sala } = req.body;
+    if (!sala) {
+        return res.status(400).json({ error: 'Sala é obrigatória.' });
     }
 
     try {
@@ -178,23 +178,67 @@ app.post('/api/admin/adicionar-aluno', async (req, res) => {
             return res.status(404).json({ error: 'Sala não encontrada.' });
         }
 
-        if (salaDoc.alunos.includes(username)) {
-            return res.status(400).json({ error: 'Aluno já cadastrado nesta sala.' });
-        }
+        // Deletar usuários associados à sala
+        await User.deleteMany({ sala });
 
-        salaDoc.alunos.push(username);
-        await salaDoc.save();
+        // Deletar faltas associadas à sala
+        await Falta.deleteMany({ sala });
 
-        await User.findOneAndUpdate(
-            { username },
-            { username, senha: username, sala, cargo: 'aluno' },
-            { upsert: true, new: true }
-        );
+        // Deletar a sala
+        await Sala.deleteOne({ id: sala });
 
         res.json({ success: true });
     } catch (error) {
-        console.error('Erro ao adicionar aluno admin:', error);
-        res.status(500).json({ error: 'Erro ao adicionar aluno' });
+        console.error('Erro ao deletar sala:', error);
+        res.status(500).json({ error: 'Erro ao deletar sala' });
+    }
+});
+
+app.post('/api/admin/adicionar-alunos', async (req, res) => {
+    const { sala, alunos } = req.body;
+    if (!sala || !Array.isArray(alunos) || alunos.length === 0) {
+        return res.status(400).json({ error: 'Sala e lista de alunos são obrigatórios.' });
+    }
+
+    try {
+        const salaDoc = await Sala.findOne({ id: sala });
+        if (!salaDoc) {
+            return res.status(404).json({ error: 'Sala não encontrada.' });
+        }
+
+        const alunosAdicionados = [];
+        const alunosJaExistentes = [];
+
+        for (const alunoNome of alunos) {
+            const alunoTrim = alunoNome.trim();
+            if (!alunoTrim) continue;
+
+            if (salaDoc.alunos.includes(alunoTrim)) {
+                alunosJaExistentes.push(alunoTrim);
+                continue;
+            }
+
+            salaDoc.alunos.push(alunoTrim);
+            alunosAdicionados.push(alunoTrim);
+
+            await User.findOneAndUpdate(
+                { username: alunoTrim },
+                { username: alunoTrim, senha: alunoTrim, sala, cargo: 'aluno' },
+                { upsert: true, new: true }
+            );
+        }
+
+        await salaDoc.save();
+
+        let message = `${alunosAdicionados.length} aluno(s) adicionado(s) com sucesso!`;
+        if (alunosJaExistentes.length > 0) {
+            message += ` ${alunosJaExistentes.length} já existiam.`;
+        }
+
+        res.json({ success: true, message });
+    } catch (error) {
+        console.error('Erro ao adicionar alunos admin:', error);
+        res.status(500).json({ error: 'Erro ao adicionar alunos' });
     }
 });
 

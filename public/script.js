@@ -34,9 +34,13 @@ const adminCriarSalaBtn = document.getElementById('adminCriarSalaBtn');
 const adminSalaMessage = document.getElementById('adminSalaMessage');
 
 const adminAlunoSala = document.getElementById('adminAlunoSala');
-const adminAlunoNome = document.getElementById('adminAlunoNome');
+const adminAlunosLista = document.getElementById('adminAlunosLista');
 const adminAdicionarAlunoBtn = document.getElementById('adminAdicionarAlunoBtn');
 const adminAlunoMessage = document.getElementById('adminAlunoMessage');
+
+const adminDeletarSala = document.getElementById('adminDeletarSala');
+const adminDeletarSalaBtn = document.getElementById('adminDeletarSalaBtn');
+const adminDeletarMessage = document.getElementById('adminDeletarMessage');
 
 const adminRelatorioSala = document.getElementById('adminRelatorioSala');
 const adminRelatorioData = document.getElementById('adminRelatorioData');
@@ -54,7 +58,8 @@ logoutBtn.addEventListener('click', fazerLogout);
 logoutBtnAdmin.addEventListener('click', fazerLogout);
 gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
 adminCriarSalaBtn.addEventListener('click', criarOuAtualizarSalaAdmin);
-adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunoAdmin);
+adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunosAdmin);
+adminDeletarSalaBtn.addEventListener('click', deletarSalaAdmin);
 adminVerRelatorioBtn.addEventListener('click', mostrarRelatorioAdmin);
 
 // Funções de Autenticação
@@ -141,6 +146,7 @@ function atualizarAdminSalaSelects(salas) {
     const options = salas.map(sala => `<option value="${sala.id}">${sala.nome} (${sala.id})</option>`).join('');
     adminAlunoSala.innerHTML = options;
     adminRelatorioSala.innerHTML = options;
+    adminDeletarSala.innerHTML = options;
 }
 
 function renderizarSalasAdmin(salas) {
@@ -217,41 +223,83 @@ async function criarOuAtualizarSalaAdmin() {
     }
 }
 
-async function adicionarAlunoAdmin() {
+async function adicionarAlunosAdmin() {
     const sala = adminAlunoSala.value;
-    const alunoNome = adminAlunoNome.value.trim();
+    const alunosTexto = adminAlunosLista.value.trim();
 
-    if (!sala || !alunoNome) {
-        adminAlunoMessage.textContent = 'Preencha a sala e o nome do aluno.';
+    if (!sala) {
+        adminAlunoMessage.textContent = 'Selecione uma sala.';
+        return;
+    }
+
+    const alunos = alunosTexto
+        .split(/\r?\n/)
+        .map(item => item.trim())
+        .filter(Boolean);
+
+    if (alunos.length === 0) {
+        adminAlunoMessage.textContent = 'Digite pelo menos um nome de aluno.';
         return;
     }
 
     try {
-        const response = await fetch('/api/admin/adicionar-aluno', {
+        const response = await fetch('/api/admin/adicionar-alunos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sala, username: alunoNome })
+            body: JSON.stringify({ sala, alunos })
         });
 
         const data = await response.json();
         if (!response.ok) {
-            adminAlunoMessage.textContent = data.error || 'Erro ao adicionar aluno.';
+            adminAlunoMessage.textContent = data.error || 'Erro ao adicionar alunos.';
             return;
         }
 
-        adminAlunoMessage.textContent = 'Aluno adicionado com sucesso!';
+        adminAlunoMessage.textContent = data.message || `${alunos.length} aluno(s) adicionado(s) com sucesso!`;
         adminAlunoMessage.style.color = '#27ae60';
-        adminAlunoNome.value = '';
-        adminAlunoSenha.value = '';
+        adminAlunosLista.value = '';
         await carregarAdminDados();
     } catch (error) {
-        console.error('Erro ao adicionar aluno:', error);
-        adminAlunoMessage.textContent = 'Erro ao adicionar aluno.';
+        console.error('Erro ao adicionar alunos:', error);
+        adminAlunoMessage.textContent = 'Erro ao adicionar alunos.';
         adminAlunoMessage.style.color = '#e74c3c';
     }
 }
 
-async function mostrarRelatorioAdmin() {
+async function deletarSalaAdmin() {
+    const sala = adminDeletarSala.value;
+
+    if (!sala) {
+        adminDeletarMessage.textContent = 'Selecione uma sala para deletar.';
+        return;
+    }
+
+    if (!confirm(`Tem certeza que deseja deletar a sala ${sala}? Esta ação não pode ser desfeita.`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/admin/deletar-sala', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sala })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+            adminDeletarMessage.textContent = data.error || 'Erro ao deletar sala.';
+            return;
+        }
+
+        adminDeletarMessage.textContent = 'Sala deletada com sucesso!';
+        adminDeletarMessage.style.color = '#27ae60';
+        await carregarAdminDados();
+    } catch (error) {
+        console.error('Erro ao deletar sala:', error);
+        adminDeletarMessage.textContent = 'Erro ao deletar sala.';
+        adminDeletarMessage.style.color = '#e74c3c';
+    }
+}
     const sala = adminRelatorioSala.value;
     const data = adminRelatorioData.value;
 
@@ -302,6 +350,7 @@ function fazerLogout() {
     loginError.textContent = '';
     adminSalaMessage.textContent = '';
     adminAlunoMessage.textContent = '';
+    adminDeletarMessage.textContent = '';
 }
 
 // Carregar dados da sala

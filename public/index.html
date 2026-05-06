@@ -86,7 +86,7 @@
 
                 <div class="admin-section">
                     <div class="section-header">
-                        <h3>Adicionar Aluno</h3>
+                        <h3>Adicionar Alunos</h3>
                     </div>
                     <div class="admin-grid">
                         <div class="input-group">
@@ -94,11 +94,11 @@
                             <select id="adminAlunoSala"></select>
                         </div>
                         <div class="input-group full-width">
-                            <label for="adminAlunoNome">Nome do Aluno</label>
-                            <input type="text" id="adminAlunoNome" placeholder="Nome do aluno" required>
+                            <label for="adminAlunosLista">Lista de Alunos (um por linha)</label>
+                            <textarea id="adminAlunosLista" rows="4" placeholder="Nome do aluno 1&#10;Nome do aluno 2&#10;Nome do aluno 3"></textarea>
                         </div>
                     </div>
-                    <button id="adminAdicionarAlunoBtn" class="btn-primary">Adicionar Aluno</button>
+                    <button id="adminAdicionarAlunoBtn" class="btn-primary">Adicionar Alunos</button>
                     <div id="adminAlunoMessage" class="error-message"></div>
                 </div>
 
@@ -125,6 +125,20 @@
                         <h3>Salas Cadastradas</h3>
                     </div>
                     <div id="adminSalasList"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h3>Deletar Sala</h3>
+                    </div>
+                    <div class="admin-grid">
+                        <div class="input-group">
+                            <label for="adminDeletarSala">Sala</label>
+                            <select id="adminDeletarSala"></select>
+                        </div>
+                    </div>
+                    <button id="adminDeletarSalaBtn" class="btn-danger">Deletar Sala</button>
+                    <div id="adminDeletarMessage" class="error-message"></div>
                 </div>
             </div>
         </div>
