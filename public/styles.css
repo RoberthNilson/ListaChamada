@@ -100,23 +100,6 @@ body {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
 }
 
-.login-actions {
-    margin-top: 15px;
-}
-
-.hidden-form {
-    display: none;
-    margin-top: 15px;
-}
-
-.hidden-form.active {
-    display: block;
-}
-
-.hidden-form .btn-secondary {
-    margin-top: 10px;
-}
-
 .error-message {
     color: #e74c3c;
     text-align: center;

@@ -12,12 +12,6 @@ const adminScreen = document.getElementById('adminScreen');
 const loginForm = document.getElementById('loginForm');
 const logoutBtn = document.getElementById('logoutBtn');
 const logoutBtnAdmin = document.getElementById('logoutBtnAdmin');
-const showRegisterAdminBtn = document.getElementById('showRegisterAdminBtn');
-const registerAdminForm = document.getElementById('registerAdminForm');
-const registerAdminUsername = document.getElementById('registerAdminUsername');
-const registerAdminPassword = document.getElementById('registerAdminPassword');
-const registerAdminBtn = document.getElementById('registerAdminBtn');
-const cancelRegisterAdminBtn = document.getElementById('cancelRegisterAdminBtn');
 const alunosList = document.getElementById('alunosList');
 const salaTitle = document.getElementById('salaTitle');
 const userName = document.getElementById('userName');
@@ -60,9 +54,6 @@ adminRelatorioData.valueAsDate = new Date();
 loginForm.addEventListener('submit', fazerLogin);
 logoutBtn.addEventListener('click', fazerLogout);
 logoutBtnAdmin.addEventListener('click', fazerLogout);
-showRegisterAdminBtn.addEventListener('click', mostrarRegistroGestor);
-registerAdminBtn.addEventListener('click', registrarGestor);
-cancelRegisterAdminBtn.addEventListener('click', fecharRegistroGestor);
 gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
 adminCriarSalaBtn.addEventListener('click', criarOuAtualizarSalaAdmin);
 adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunoAdmin);
@@ -119,52 +110,6 @@ function getCargoNome(cargo) {
         'admin': '👩‍💼 Gestor(a)'
     };
     return cargos[cargo] || cargo;
-}
-
-function mostrarRegistroGestor() {
-    registerAdminForm.classList.add('active');
-    showRegisterAdminBtn.classList.add('hidden');
-}
-
-function fecharRegistroGestor() {
-    registerAdminForm.classList.remove('active');
-    showRegisterAdminBtn.classList.remove('hidden');
-    registerAdminUsername.value = '';
-    registerAdminPassword.value = '';
-    loginError.textContent = '';
-}
-
-async function registrarGestor(event) {
-    event.preventDefault();
-    const username = registerAdminUsername.value.trim();
-    const password = registerAdminPassword.value.trim();
-
-    if (!username || !password) {
-        loginError.textContent = 'Preencha usuário e senha para criar o gestor.';
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/admin/registrar-gestor', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-            loginError.textContent = data.error || 'Erro ao registrar gestor.';
-            return;
-        }
-
-        loginError.textContent = 'Gestor criado com sucesso! Faça login agora.';
-        loginError.style.color = '#27ae60';
-        fecharRegistroGestor();
-    } catch (error) {
-        console.error('Erro ao registrar gestor:', error);
-        loginError.textContent = 'Erro ao registrar gestor.';
-        loginError.style.color = '#e74c3c';
-    }
 }
 
 async function carregarAdminDados() {
