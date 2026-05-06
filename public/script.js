@@ -14,7 +14,6 @@ const alunosList = document.getElementById('alunosList');
 const salaTitle = document.getElementById('salaTitle');
 const userName = document.getElementById('userName');
 const userCargo = document.getElementById('userCargo');
-const visualizarRelatorioBtn = document.getElementById('visualizarRelatorioBtn');
 const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
 const dataChamada = document.getElementById('dataChamada');
 const loginError = document.getElementById('loginError');
@@ -25,7 +24,6 @@ dataChamada.valueAsDate = new Date();
 // Eventos
 loginForm.addEventListener('submit', fazerLogin);
 logoutBtn.addEventListener('click', fazerLogout);
-visualizarRelatorioBtn.addEventListener('click', visualizarRelatorioTabela);
 gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
 
 // Funções de Autenticação
@@ -203,73 +201,6 @@ async function carregarFaltas() {
             </div>
         `).join('')}
     `;
-}
-
-// Visualizar relatório em tabela (mobile-friendly)
-async function visualizarRelatorioTabela() {
-    const data = dataChamada.value;
-    
-    if (!data) {
-        alert('⚠️ Selecione uma data para visualizar o relatório!');
-        return;
-    }
-    
-    try {
-        visualizarRelatorioBtn.textContent = '⏳ Carregando...';
-        visualizarRelatorioBtn.disabled = true;
-        
-        const response = await fetch('/api/relatorio-json', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sala: salaAtual,
-                data: data
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Erro ao carregar relatório');
-        }
-        
-        const relatorio = await response.json();
-        
-        let html = `
-            <div style="padding: 15px; background: #f8f9fa; border-radius: 10px; margin-bottom: 20px;">
-                <h4 style="color: #667eea; margin-bottom: 10px;">📊 Relatório de Faltas</h4>
-                <p><strong>Sala:</strong> ${relatorio.sala}</p>
-                <p><strong>Data:</strong> ${new Date(relatorio.data).toLocaleDateString('pt-BR')}</p>
-                <p><strong>Total de faltas:</strong> <span style="color: #e74c3c; font-weight: 600;">${relatorio.totalFaltas}</span></p>
-            </div>
-        `;
-        
-        if (relatorio.totalFaltas === 0) {
-            html += '<div class="sem-faltas">✅ Nenhuma falta registrada nesta data</div>';
-        } else {
-            html += '<table class="relatorio-table" style="width: 100%; border-collapse: collapse; margin-top: 15px;">';
-            html += '<thead><tr style="background: #667eea; color: white;"><th style="padding: 10px; text-align: left;">Aluno</th><th style="padding: 10px; text-align: left;">Registrado Por</th><th style="padding: 10px; text-align: left;">Data/Hora</th></tr></thead><tbody>';
-            
-            relatorio.faltas.forEach(falta => {
-                html += `
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 10px;">${falta.aluno}</td>
-                        <td style="padding: 10px;">${falta.registradoPor}</td>
-                        <td style="padding: 10px; font-size: 12px;">${falta.dataRegistro}</td>
-                    </tr>
-                `;
-            });
-            
-            html += '</tbody></table>';
-        }
-        
-        document.getElementById('relatorioContent').innerHTML = html;
-        
-    } catch (error) {
-        console.error('Erro ao visualizar relatório:', error);
-        alert('❌ Erro ao visualizar relatório');
-    } finally {
-        visualizarRelatorioBtn.textContent = '👁️ Visualizar';
-        visualizarRelatorioBtn.disabled = false;
-    }
 }
 
 // Gerar relatório em Excel
