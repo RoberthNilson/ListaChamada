@@ -159,6 +159,7 @@ app.get('/api/admin/salas', async (req, res) => {
 app.post('/api/admin/criar-sala', async (req, res) => {
     const {
         curso,
+        serie,
         nome,
         lider,
         liderSenha,
@@ -169,7 +170,7 @@ app.post('/api/admin/criar-sala', async (req, res) => {
         alunos = []
     } = req.body;
 
-    if (!curso || !nome || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
+    if (!curso || !serie || !nome || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
         return res.status(400).json({ error: 'Todos os campos da sala e dos cargos são obrigatórios.' });
     }
 
@@ -178,6 +179,7 @@ app.post('/api/admin/criar-sala', async (req, res) => {
             { curso },
             {
                 curso,
+                serie,
                 nome,
                 lider,
                 viceLider,

@@ -23,6 +23,7 @@ const dataChamada = document.getElementById('dataChamada');
 const loginError = document.getElementById('loginError');
 
 const adminSalaCurso = document.getElementById('adminSalaCurso');
+const adminSalaSerie = document.getElementById('adminSalaSerie');
 const adminSalaNome = document.getElementById('adminSalaNome');
 const adminLider = document.getElementById('adminLider');
 const adminLiderSenha = document.getElementById('adminLiderSenha');
@@ -221,7 +222,7 @@ function renderizarSalasAdmin(salas) {
 
         return `
             <div class="admin-card">
-                <strong>${escapeHtml(sala.nome)} (${escapeHtml(sala.curso)})</strong>
+                <strong>${escapeHtml(sala.nome)} (${escapeHtml(sala.curso)} - ${escapeHtml(sala.serie)})</strong>
                 <p>Presidente: ${escapeHtml(sala.lider)}</p>
                 <p>Vice-Presidente: ${escapeHtml(sala.viceLider)}</p>
                 <p>Secretário: ${escapeHtml(sala.secretario)}</p>
@@ -234,6 +235,7 @@ function renderizarSalasAdmin(salas) {
 
 async function criarOuAtualizarSalaAdmin() {
     const salaCurso = adminSalaCurso ? adminSalaCurso.value.trim() : '';
+    const salaSerie = adminSalaSerie ? adminSalaSerie.value.trim() : '';
     const nomeSala = adminSalaNome ? adminSalaNome.value.trim() : '';
     const lider = adminLider ? adminLider.value.trim() : '';
     const liderSenha = adminLiderSenha ? adminLiderSenha.value.trim() : '';
@@ -243,7 +245,7 @@ async function criarOuAtualizarSalaAdmin() {
     const secretarioSenha = adminSecretarioSenha ? adminSecretarioSenha.value.trim() : '';
     const alunos = [];
 
-    if (!salaCurso || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
+    if (!salaCurso || !salaSerie || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
         if (adminSalaMessage) {
             adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
             adminSalaMessage.style.color = '#e74c3c';
@@ -257,6 +259,7 @@ async function criarOuAtualizarSalaAdmin() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 curso: salaCurso,
+                serie: salaSerie,
                 nome: nomeSala,
                 lider,
                 liderSenha,
@@ -285,6 +288,7 @@ async function criarOuAtualizarSalaAdmin() {
         
         // Limpar campos
         if (adminSalaCurso) adminSalaCurso.value = '';
+        if (adminSalaSerie) adminSalaSerie.value = '';
         if (adminSalaNome) adminSalaNome.value = '';
         if (adminLider) adminLider.value = '';
         if (adminLiderSenha) adminLiderSenha.value = '';
