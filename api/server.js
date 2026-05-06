@@ -18,50 +18,6 @@ const Falta = require('../models/Falta');
 const Sala = require('../models/Sala');
 const User = require('../models/User');
 
-// Dados pré-definidos das salas
-const salas = {
-    'sala1': {
-        id: 'sala1',
-        nome: 'Sala 300 - Matemática',
-        lider: 'Ângelo',
-        viceLider: 'mariaoliveira',
-        secretario: 'pedrosantos',
-        alunos: ['Ana Costa', 'Bruno Lima', 'Carla Souza', 'Daniel Rocha', 'Eduarda Mendes', 
-                 'Felipe Alves', 'Gabriela Nunes', 'Henrique Dias', 'Isabela Cruz', 'Julio Cesar']
-    },
-    'sala2': {
-        id: 'sala2',
-        nome: 'Sala 102 - Português',
-        lider: 'carlosalves',
-        viceLider: 'fernandacosta',
-        secretario: 'leticiagomes',
-        alunos: ['Larissa Mendes', 'Marcos Paulo', 'Natalia Rios', 'Otavio Augusto', 'Paula Tavares',
-                 'Rafael Andrade', 'Sabrina Lins', 'Thiago Nunes', 'Ursula Mata', 'Victor Hugo']
-    },
-    'sala3': {
-        id: 'sala3',
-        nome: 'Sala 103 - Ciências',
-        lider: 'robertosilva',
-        viceLider: 'patricialima',
-        secretario: 'amandacruz',
-        alunos: ['Wagner Silva', 'Xavier Lima', 'Yara Santos', 'Zeca Oliveira', 'Alice Marques',
-                 'Bernardo Rocha', 'Camila Ferreira', 'Diego Costa', 'Elisa Martins', 'Fernando Lima']
-    }
-};
-
-// Credenciais de acesso (movidas para MongoDB)
-const users = {
-    'Ângelo': { senha: 'angelo456', sala: 'sala1', cargo: 'lider' },
-    'mariaoliveira': { senha: 'vice123', sala: 'sala1', cargo: 'viceLider' },
-    'pedrosantos': { senha: 'secre123', sala: 'sala1', cargo: 'secretario' },
-    'carlosalves': { senha: 'lider123', sala: 'sala2', cargo: 'lider' },
-    'fernandacosta': { senha: 'vice123', sala: 'sala2', cargo: 'viceLider' },
-    'leticiagomes': { senha: 'secre123', sala: 'sala2', cargo: 'secretario' },
-    'robertosilva': { senha: 'lider123', sala: 'sala3', cargo: 'lider' },
-    'patricialima': { senha: 'vice123', sala: 'sala3', cargo: 'viceLider' },
-    'amandacruz': { senha: 'secre123', sala: 'sala3', cargo: 'secretario' }
-};
-
 // Função para conectar ao MongoDB
 const connectDB = async () => {
     if (!process.env.MONGODB_URI) {
