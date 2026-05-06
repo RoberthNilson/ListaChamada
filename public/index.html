@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Chamada - Iema Pleno Carolina</title>
-    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
@@ -42,6 +41,14 @@
             </div>
 
             <div class="content admin-content">
+                <!-- Notificações de relatórios recebidos -->
+                <div class="admin-section">
+                    <div class="section-header">
+                        <h3>📬 Relatórios Recebidos</h3>
+                    </div>
+                    <div id="adminNotificacoes"></div>
+                </div>
+
                 <div class="admin-section">
                     <div class="section-header">
                         <h3>Cadastro de Sala e Usuários</h3>
@@ -104,24 +111,6 @@
 
                 <div class="admin-section">
                     <div class="section-header">
-                        <h3>Relatório de Faltas por Sala</h3>
-                    </div>
-                    <div class="admin-grid">
-                        <div class="input-group">
-                            <label for="adminRelatorioSala">Sala</label>
-                            <select id="adminRelatorioSala"></select>
-                        </div>
-                        <div class="input-group">
-                            <label for="adminRelatorioData">Data da Chamada</label>
-                            <input type="date" id="adminRelatorioData">
-                        </div>
-                    </div>
-                    <button id="adminVerRelatorioBtn" class="btn-secondary">Ver Faltas</button>
-                    <div id="adminRelatorioContent"></div>
-                </div>
-
-                <div class="admin-section">
-                    <div class="section-header">
                         <h3>Salas Cadastradas</h3>
                     </div>
                     <div id="adminSalasList"></div>
@@ -171,7 +160,7 @@
                 <div class="relatorio-section">
                     <div class="section-header">
                         <h3>Registro de Faltas</h3>
-                        <button id="gerarRelatorioBtn" class="btn-secondary">📊 Baixar Excel</button>
+                        <button id="gerarRelatorioBtn" class="btn-secondary">📤 Enviar Relatório ao Admin</button>
                     </div>
                     <div id="relatorioContent"></div>
                 </div>

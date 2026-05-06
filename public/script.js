@@ -4,6 +4,7 @@ let salaAtual = null;
 let cargoAtual = null;
 let alunosAtuais = [];
 let faltasAtuais = {};
+let ws = null;
 
 // Elementos DOM
 const loginScreen = document.getElementById('loginScreen');
@@ -42,25 +43,20 @@ const adminDeletarSala = document.getElementById('adminDeletarSala');
 const adminDeletarSalaBtn = document.getElementById('adminDeletarSalaBtn');
 const adminDeletarMessage = document.getElementById('adminDeletarMessage');
 
-const adminRelatorioSala = document.getElementById('adminRelatorioSala');
-const adminRelatorioData = document.getElementById('adminRelatorioData');
-const adminVerRelatorioBtn = document.getElementById('adminVerRelatorioBtn');
-const adminRelatorioContent = document.getElementById('adminRelatorioContent');
+const adminNotificacoes = document.getElementById('adminNotificacoes');
 const adminSalasList = document.getElementById('adminSalasList');
 
 // Configurar data atual
 if (dataChamada) dataChamada.valueAsDate = new Date();
-if (adminRelatorioData) adminRelatorioData.valueAsDate = new Date();
 
 // Eventos
 if (loginForm) loginForm.addEventListener('submit', fazerLogin);
 if (logoutBtn) logoutBtn.addEventListener('click', fazerLogout);
 if (logoutBtnAdmin) logoutBtnAdmin.addEventListener('click', fazerLogout);
-if (gerarRelatorioBtn) gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
+if (gerarRelatorioBtn) gerarRelatorioBtn.addEventListener('click', enviarRelatorioAoAdmin);
 if (adminCriarSalaBtn) adminCriarSalaBtn.addEventListener('click', criarOuAtualizarSalaAdmin);
 if (adminAdicionarAlunoBtn) adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunosAdmin);
 if (adminDeletarSalaBtn) adminDeletarSalaBtn.addEventListener('click', deletarSalaAdmin);
-if (adminVerRelatorioBtn) adminVerRelatorioBtn.addEventListener('click', mostrarRelatorioAdmin);
 if (dataChamada) dataChamada.addEventListener('change', () => {
     if (salaAtual) {
         renderizarListaAlunos();
@@ -91,8 +87,9 @@ async function fazerLogin(e) {
 
             if (isAdminCargo(cargoAtual)) {
                 if (userNameAdmin) userNameAdmin.textContent = usuarioAtual;
-                if (userCargoAdmin) userCargoAdmin.textContent = '👩‍💼 Gestor(a)';
+                if (userCargoAdmin) userCargoAdmin.textContent = 'Gestor(a)';
                 await carregarAdminDados();
+                conectarWebSocketAdmin();
                 loginScreen.classList.remove('active');
                 adminScreen.classList.add('active');
             } else {
@@ -120,14 +117,14 @@ function isAdminCargo(cargo) {
 function getCargoNome(cargo) {
     const valor = String(cargo || '').trim().toLowerCase();
     const cargos = {
-        'lider': '👑 Líder',
-        'vicelider': '⭐ Vice-Líder',
-        'vice': '⭐ Vice-Líder',
-        'secretario': '📝 Secretário',
-        'admin': '👩‍💼 Gestor(a)',
-        'adimin': '👩‍💼 Gestor(a)',
-        'gestor': '👩‍💼 Gestor(a)',
-        'administrador': '👩‍💼 Gestor(a)'
+        'lider': 'Presidente',
+        'vicelider': 'Vice-Presidente',
+        'vice': 'Vice-Presidente',
+        'secretario': 'Secretário',
+        'admin': 'Gestor(a)',
+        'adimin': 'Gestor(a)',
+        'gestor': 'Gestor(a)',
+        'administrador': 'Gestor(a)'
     };
     return cargos[valor] || cargo;
 }
@@ -145,18 +142,97 @@ async function carregarAdminDados() {
         
         if (adminSalaMessage) adminSalaMessage.textContent = '';
         if (adminAlunoMessage) adminAlunoMessage.textContent = '';
-        if (adminRelatorioContent) adminRelatorioContent.innerHTML = '<div class="sem-faltas">Selecione uma sala e data para ver o relatório.</div>';
+        
+        // Carregar notificações pendentes
+        await carregarNotificacoesPendentes();
+        
     } catch (error) {
         console.error('Erro ao carregar dados do administrador:', error);
         if (adminSalaMessage) adminSalaMessage.textContent = 'Erro ao carregar dados de administração';
     }
 }
 
+async function carregarNotificacoesPendentes() {
+    try {
+        const response = await fetch('/api/admin/notificacoes');
+        const notificacoes = await response.json();
+        
+        if (notificacoes.length > 0 && adminNotificacoes) {
+            notificacoes.forEach(notif => {
+                mostrarNotificacaoAdmin(notif);
+            });
+        }
+    } catch (error) {
+        console.error('Erro ao carregar notificações:', error);
+    }
+}
+
+function conectarWebSocketAdmin() {
+    const protocolo = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    ws = new WebSocket(`${protocolo}//${host}`);
+    
+    ws.onopen = () => {
+        console.log('WebSocket conectado como admin');
+        ws.send(JSON.stringify({ tipo: 'admin_conectado' }));
+    };
+    
+    ws.onmessage = (event) => {
+        const dados = JSON.parse(event.data);
+        if (dados.tipo === 'relatorio_faltas') {
+            mostrarNotificacaoAdmin(dados);
+        }
+    };
+    
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+    };
+}
+
+function mostrarNotificacaoAdmin(relatorio) {
+    if (!adminNotificacoes) return;
+    
+    const faltasHtml = relatorio.faltas && relatorio.faltas.length > 0
+        ? relatorio.faltas.map(f => `<li>${escapeHtml(f.aluno)}</li>`).join('')
+        : '<li>Nenhuma falta registrada nesta data</li>';
+    
+    const notifDiv = document.createElement('div');
+    notifDiv.className = 'notificacao';
+    notifDiv.style.border = '1px solid #ccc';
+    notifDiv.style.padding = '10px';
+    notifDiv.style.margin = '10px 0';
+    notifDiv.style.borderRadius = '5px';
+    notifDiv.style.backgroundColor = '#f9f9f9';
+    notifDiv.innerHTML = `
+        <strong>📢 NOVO RELATÓRIO RECEBIDO!</strong>
+        <p><strong>Sala:</strong> ${escapeHtml(relatorio.sala)}</p>
+        <p><strong>Data:</strong> ${escapeHtml(relatorio.data)}</p>
+        <p><strong>Enviado por:</strong> ${escapeHtml(relatorio.enviadoPor)} (${escapeHtml(relatorio.cargo)})</p>
+        <p><strong>Total de faltas:</strong> ${relatorio.faltas ? relatorio.faltas.length : 0}</p>
+        <p><strong>Alunos com falta:</strong></p>
+        <ul>${faltasHtml}</ul>
+        <button onclick="marcarNotificacaoComoLida(this, '${relatorio.id || ''}')">✓ Marcar como lida</button>
+        <hr>
+    `;
+    
+    adminNotificacoes.insertBefore(notifDiv, adminNotificacoes.firstChild);
+}
+
+window.marcarNotificacaoComoLida = async (botao, notificacaoId) => {
+    if (notificacaoId) {
+        await fetch('/api/admin/marcar-notificacao-lida', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: notificacaoId })
+        });
+    }
+    botao.parentElement.remove();
+};
+
 function atualizarAdminSalaSelects(salas) {
     const options = salas.map(sala => `<option value="${sala.id}">${sala.nome} (${sala.id})</option>`).join('');
     
     if (adminAlunoSala) adminAlunoSala.innerHTML = options;
-    if (adminRelatorioSala) adminRelatorioSala.innerHTML = options;
     if (adminDeletarSala) adminDeletarSala.innerHTML = options;
 }
 
@@ -164,7 +240,7 @@ function renderizarSalasAdmin(salas) {
     if (!adminSalasList) return;
     
     if (salas.length === 0) {
-        adminSalasList.innerHTML = '<div class="sem-faltas">Nenhuma sala cadastrada.</div>';
+        adminSalasList.innerHTML = '<div>Nenhuma sala cadastrada.</div>';
         return;
     }
 
@@ -174,7 +250,7 @@ function renderizarSalasAdmin(salas) {
             : '<li>Nenhum aluno cadastrado</li>';
 
         return `
-            <div class="admin-card">
+            <div style="border:1px solid #ddd; padding:10px; margin:10px 0; border-radius:5px;">
                 <strong>${escapeHtml(sala.nome)} (${escapeHtml(sala.id)})</strong>
                 <p>Presidente: ${escapeHtml(sala.lider)}</p>
                 <p>Vice-Presidente: ${escapeHtml(sala.viceLider)}</p>
@@ -195,12 +271,10 @@ async function criarOuAtualizarSalaAdmin() {
     const viceLiderSenha = adminViceLiderSenha ? adminViceLiderSenha.value.trim() : '';
     const secretario = adminSecretario ? adminSecretario.value.trim() : '';
     const secretarioSenha = adminSecretarioSenha ? adminSecretarioSenha.value.trim() : '';
-    const alunos = [];
 
     if (!salaId || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
         if (adminSalaMessage) {
-            adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
-            adminSalaMessage.style.color = '#e74c3c';
+            adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios.';
         }
         return;
     }
@@ -218,7 +292,7 @@ async function criarOuAtualizarSalaAdmin() {
                 viceLiderSenha,
                 secretario,
                 secretarioSenha,
-                alunos
+                alunos: []
             })
         });
 
@@ -226,15 +300,13 @@ async function criarOuAtualizarSalaAdmin() {
 
         if (!response.ok) {
             if (adminSalaMessage) {
-                adminSalaMessage.textContent = data.error || 'Erro ao criar ou atualizar a sala.';
-                adminSalaMessage.style.color = '#e74c3c';
+                adminSalaMessage.textContent = data.error || 'Erro ao criar sala.';
             }
             return;
         }
 
         if (adminSalaMessage) {
             adminSalaMessage.textContent = 'Sala criada/atualizada com sucesso!';
-            adminSalaMessage.style.color = '#27ae60';
         }
         
         // Limpar campos
@@ -256,8 +328,7 @@ async function criarOuAtualizarSalaAdmin() {
     } catch (error) {
         console.error('Erro ao criar sala:', error);
         if (adminSalaMessage) {
-            adminSalaMessage.textContent = 'Erro ao criar ou atualizar a sala.';
-            adminSalaMessage.style.color = '#e74c3c';
+            adminSalaMessage.textContent = 'Erro ao criar sala.';
         }
     }
 }
@@ -269,20 +340,15 @@ async function adicionarAlunosAdmin() {
     if (!sala) {
         if (adminAlunoMessage) {
             adminAlunoMessage.textContent = 'Selecione uma sala.';
-            adminAlunoMessage.style.color = '#e74c3c';
         }
         return;
     }
 
-    const alunos = alunosTexto
-        .split(/\r?\n/)
-        .map(item => item.trim())
-        .filter(Boolean);
+    const alunos = alunosTexto.split(/\r?\n/).map(item => item.trim()).filter(Boolean);
 
     if (alunos.length === 0) {
         if (adminAlunoMessage) {
             adminAlunoMessage.textContent = 'Digite pelo menos um nome de aluno.';
-            adminAlunoMessage.style.color = '#e74c3c';
         }
         return;
     }
@@ -298,14 +364,12 @@ async function adicionarAlunosAdmin() {
         if (!response.ok) {
             if (adminAlunoMessage) {
                 adminAlunoMessage.textContent = data.error || 'Erro ao adicionar alunos.';
-                adminAlunoMessage.style.color = '#e74c3c';
             }
             return;
         }
 
         if (adminAlunoMessage) {
             adminAlunoMessage.textContent = data.message || `${alunos.length} aluno(s) adicionado(s) com sucesso!`;
-            adminAlunoMessage.style.color = '#27ae60';
         }
         
         if (adminAlunosLista) adminAlunosLista.value = '';
@@ -319,7 +383,6 @@ async function adicionarAlunosAdmin() {
         console.error('Erro ao adicionar alunos:', error);
         if (adminAlunoMessage) {
             adminAlunoMessage.textContent = 'Erro ao adicionar alunos.';
-            adminAlunoMessage.style.color = '#e74c3c';
         }
     }
 }
@@ -330,12 +393,11 @@ async function deletarSalaAdmin() {
     if (!sala) {
         if (adminDeletarMessage) {
             adminDeletarMessage.textContent = 'Selecione uma sala para deletar.';
-            adminDeletarMessage.style.color = '#e74c3c';
         }
         return;
     }
 
-    if (!confirm(`Tem certeza que deseja deletar a sala ${sala}? Esta ação não pode ser desfeita.`)) {
+    if (!confirm(`Tem certeza que deseja deletar a sala ${sala}?`)) {
         return;
     }
 
@@ -350,14 +412,12 @@ async function deletarSalaAdmin() {
         if (!response.ok) {
             if (adminDeletarMessage) {
                 adminDeletarMessage.textContent = data.error || 'Erro ao deletar sala.';
-                adminDeletarMessage.style.color = '#e74c3c';
             }
             return;
         }
 
         if (adminDeletarMessage) {
             adminDeletarMessage.textContent = 'Sala deletada com sucesso!';
-            adminDeletarMessage.style.color = '#27ae60';
         }
         
         await carregarAdminDados();
@@ -370,73 +430,18 @@ async function deletarSalaAdmin() {
         console.error('Erro ao deletar sala:', error);
         if (adminDeletarMessage) {
             adminDeletarMessage.textContent = 'Erro ao deletar sala.';
-            adminDeletarMessage.style.color = '#e74c3c';
         }
-    }
-}
-
-// ==================== FUNÇÃO DE RELATÓRIO ADMIN (CORRIGIDA) ====================
-
-async function mostrarRelatorioAdmin() {
-    // Validação dos elementos
-    if (!adminRelatorioSala || !adminRelatorioData || !adminRelatorioContent) {
-        console.error('Elementos do DOM não encontrados');
-        return;
-    }
-
-    const sala = adminRelatorioSala.value;
-    const data = adminRelatorioData.value;
-
-    if (!sala || !data) {
-        adminRelatorioContent.innerHTML = '<div class="sem-faltas">⚠️ Selecione sala e data para ver o relatório.</div>';
-        return;
-    }
-
-    // Mostrar loading
-    adminRelatorioContent.innerHTML = '<div class="sem-faltas">⏳ Carregando relatório...</div>';
-
-    try {
-        const response = await fetch('/api/admin/relatorio-faltas', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ sala, data })
-        });
-
-        const payload = await response.json();
-        
-        if (!response.ok) {
-            throw new Error(payload.error || 'Erro ao buscar relatório');
-        }
-
-        if (!payload.faltas || payload.faltas.length === 0) {
-            adminRelatorioContent.innerHTML = '<div class="sem-faltas">✅ Nenhuma falta registrada nesta data.</div>';
-            return;
-        }
-
-        // Renderizar relatório
-        adminRelatorioContent.innerHTML = `
-            <div class="relatorio-header" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-                <p><strong>📅 Data:</strong> ${escapeHtml(data)}</p>
-                <p><strong>📊 Total de Faltas:</strong> ${payload.faltas.length}</p>
-            </div>
-            ${payload.faltas.map(falta => `
-                <div class="falta-item">
-                    <strong>📌 ${escapeHtml(falta.aluno)}</strong>
-                    <p><small>👔 Registrado por: ${escapeHtml(falta.registradoPor)}</small></p>
-                    <p><small>🕒 ${new Date(falta.dataRegistro).toLocaleString('pt-BR')}</small></p>
-                </div>
-            `).join('')}
-        `;
-        
-    } catch (error) {
-        console.error('Erro ao consultar relatório admin:', error);
-        adminRelatorioContent.innerHTML = `<div class="sem-faltas">❌ Erro ao buscar relatório: ${error.message}</div>`;
     }
 }
 
 // ==================== FUNÇÕES DE LOGOUT ====================
 
 function fazerLogout() {
+    if (ws) {
+        ws.close();
+        ws = null;
+    }
+    
     usuarioAtual = null;
     cargoAtual = null;
     salaAtual = null;
@@ -447,9 +452,6 @@ function fazerLogout() {
     
     if (loginForm) loginForm.reset();
     if (loginError) loginError.textContent = '';
-    if (adminSalaMessage) adminSalaMessage.textContent = '';
-    if (adminAlunoMessage) adminAlunoMessage.textContent = '';
-    if (adminDeletarMessage) adminDeletarMessage.textContent = '';
 }
 
 // ==================== FUNÇÕES DE CHAMADA ====================
@@ -483,25 +485,21 @@ function renderizarListaAlunos() {
         const temFalta = faltasAtuais[dataAtual] && faltasAtuais[dataAtual][aluno];
         
         return `
-            <div class="aluno-item">
-                <span class="aluno-nome">
-                    ${escapeHtml(aluno)}
-                    ${temFalta ? '<span class="falta-registrada">✓ Falta registrada</span>' : ''}
-                </span>
-                <button class="btn-falta" onclick="registrarFalta('${escapeHtml(aluno).replace(/'/g, "\\'")}')" ${temFalta ? 'disabled' : ''}>
-                    ✗ Registrar Falta
+            <div style="display:flex; justify-content:space-between; padding:8px; border-bottom:1px solid #eee;">
+                <span>${escapeHtml(aluno)} ${temFalta ? '✓ Falta registrada' : ''}</span>
+                <button onclick="registrarFalta('${escapeHtml(aluno).replace(/'/g, "\\'")}')" ${temFalta ? 'disabled' : ''}>
+                    Registrar Falta
                 </button>
             </div>
         `;
     }).join('');
 }
 
-// Registrar falta (função global)
 window.registrarFalta = async (aluno) => {
     const dataAtual = dataChamada ? dataChamada.value : new Date().toISOString().split('T')[0];
     
     if (faltasAtuais[dataAtual] && faltasAtuais[dataAtual][aluno]) {
-        alert('⚠️ Este aluno já possui falta registrada nesta data!');
+        alert('Este aluno já possui falta registrada nesta data!');
         return;
     }
     
@@ -537,13 +535,13 @@ window.registrarFalta = async (aluno) => {
                 dataRegistro: new Date().toISOString()
             };
             
-            alert('✅ Falta registrada com sucesso!');
+            alert('Falta registrada com sucesso!');
             renderizarListaAlunos();
             carregarFaltas();
         }
     } catch (error) {
         console.error('Erro ao registrar falta:', error);
-        alert('❌ ' + error.message);
+        alert(error.message);
     }
 };
 
@@ -557,40 +555,43 @@ async function carregarFaltas() {
     const faltasList = Object.entries(faltasData);
     
     if (faltasList.length === 0) {
-        relatorioContent.innerHTML = '<div class="sem-faltas">✓ Nenhuma falta registrada nesta data</div>';
+        relatorioContent.innerHTML = '<div>Nenhuma falta registrada nesta data</div>';
         return;
     }
     
     relatorioContent.innerHTML = `
-        <div class="relatorio-header" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-            <p><strong>📅 Data:</strong> ${escapeHtml(dataAtual)}</p>
-            <p><strong>📊 Total de Faltas:</strong> ${faltasList.length}</p>
+        <div style="margin-bottom:15px; padding:10px; background:#f8f9fa;">
+            <p><strong>Data:</strong> ${escapeHtml(dataAtual)}</p>
+            <p><strong>Total de Faltas:</strong> ${faltasList.length}</p>
         </div>
         ${faltasList.map(([aluno, info]) => `
-            <div class="falta-item">
-                <strong>📌 ${escapeHtml(aluno)}</strong>
-                <p><small>👔 Registrado por: ${escapeHtml(info.registradoPor)}</small></p>
-                <p><small>🕒 Data registro: ${new Date(info.dataRegistro).toLocaleString('pt-BR')}</small></p>
+            <div style="padding:8px; border-bottom:1px solid #ddd;">
+                <strong>${escapeHtml(aluno)}</strong>
+                <p><small>Registrado por: ${escapeHtml(info.registradoPor)}</small></p>
+                <p><small>${new Date(info.dataRegistro).toLocaleString('pt-BR')}</small></p>
             </div>
         `).join('')}
     `;
 }
 
-async function gerarRelatorioExcel() {
+// ==================== FUNÇÃO PRINCIPAL: ENVIAR RELATÓRIO AO ADMIN ====================
+
+async function enviarRelatorioAoAdmin() {
     const data = dataChamada ? dataChamada.value : null;
     
     if (!data) {
-        alert('⚠️ Selecione uma data para gerar o relatório!');
+        alert('Selecione uma data para enviar o relatório ao administrador!');
         return;
     }
     
     if (!gerarRelatorioBtn) return;
     
     try {
-        gerarRelatorioBtn.textContent = '⏳ Gerando...';
+        gerarRelatorioBtn.textContent = 'Enviando...';
         gerarRelatorioBtn.disabled = true;
         
-        const response = await fetch('/api/gerar-relatorio-excel', {
+        // Buscar faltas da data selecionada
+        const response = await fetch('/api/buscar-faltas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -599,27 +600,45 @@ async function gerarRelatorioExcel() {
             })
         });
         
-        if (!response.ok) {
-            throw new Error('Erro ao gerar relatório');
+        const faltas = await response.json();
+        
+        // Tentar enviar via WebSocket primeiro
+        let enviado = false;
+        
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({
+                tipo: 'relatorio_faltas',
+                sala: salaAtual,
+                data: data,
+                enviadoPor: usuarioAtual,
+                cargo: cargoAtual,
+                faltas: faltas
+            }));
+            enviado = true;
         }
         
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `relatorio_faltas_${salaAtual}_${data}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        window.URL.revokeObjectURL(url);
+        // Fallback: salvar no banco
+        if (!enviado) {
+            await fetch('/api/enviar-relatorio-admin', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sala: salaAtual,
+                    data: data,
+                    enviadoPor: usuarioAtual,
+                    cargo: cargoAtual,
+                    faltas: faltas
+                })
+            });
+        }
         
-        alert('✅ Relatório Excel gerado com sucesso!');
+        alert(`✅ Relatório de faltas do dia ${data} enviado para o administrador!`);
         
     } catch (error) {
-        console.error('Erro ao gerar relatório Excel:', error);
-        alert('❌ Erro ao gerar relatório Excel');
+        console.error('Erro ao enviar relatório:', error);
+        alert('Erro ao enviar relatório para o administrador');
     } finally {
-        gerarRelatorioBtn.textContent = '📊 Gerar Relatório Excel';
+        gerarRelatorioBtn.textContent = 'Enviar Relatório ao Admin';
         gerarRelatorioBtn.disabled = false;
     }
 }
@@ -633,4 +652,4 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-console.log('✅ Sistema de Chamada carregado e atualizado!');
+console.log('Sistema de Chamada carregado com envio ao admin!');
