@@ -30,7 +30,6 @@ const adminViceLider = document.getElementById('adminViceLider');
 const adminViceLiderSenha = document.getElementById('adminViceLiderSenha');
 const adminSecretario = document.getElementById('adminSecretario');
 const adminSecretarioSenha = document.getElementById('adminSecretarioSenha');
-const adminAlunosLista = document.getElementById('adminAlunosLista');
 const adminCriarSalaBtn = document.getElementById('adminCriarSalaBtn');
 const adminSalaMessage = document.getElementById('adminSalaMessage');
 
@@ -177,10 +176,7 @@ async function criarOuAtualizarSalaAdmin() {
     const viceLiderSenha = adminViceLiderSenha.value.trim();
     const secretario = adminSecretario.value.trim();
     const secretarioSenha = adminSecretarioSenha.value.trim();
-    const alunos = adminAlunosLista.value
-        .split(/\r?\n/)
-        .map(item => item.trim())
-        .filter(Boolean);
+    const alunos = [];
 
     if (!salaId || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
         adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
