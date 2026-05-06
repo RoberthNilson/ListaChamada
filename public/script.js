@@ -15,7 +15,6 @@ const salaTitle = document.getElementById('salaTitle');
 const userName = document.getElementById('userName');
 const userCargo = document.getElementById('userCargo');
 const visualizarRelatorioBtn = document.getElementById('visualizarRelatorioBtn');
-const compartilharBtn = document.getElementById('compartilharBtn');
 const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
 const dataChamada = document.getElementById('dataChamada');
 const loginError = document.getElementById('loginError');
@@ -27,7 +26,6 @@ dataChamada.valueAsDate = new Date();
 loginForm.addEventListener('submit', fazerLogin);
 logoutBtn.addEventListener('click', fazerLogout);
 visualizarRelatorioBtn.addEventListener('click', visualizarRelatorioTabela);
-compartilharBtn.addEventListener('click', compartilharRelatorio);
 gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
 
 // Funções de Autenticação
@@ -271,70 +269,6 @@ async function visualizarRelatorioTabela() {
     } finally {
         visualizarRelatorioBtn.textContent = '👁️ Visualizar';
         visualizarRelatorioBtn.disabled = false;
-    }
-}
-
-// Compartilhar relatório (mobile)
-async function compartilharRelatorio() {
-    const data = dataChamada.value;
-    
-    if (!data) {
-        alert('⚠️ Selecione uma data para compartilhar o relatório!');
-        return;
-    }
-    
-    try {
-        compartilharBtn.textContent = '⏳ Preparando...';
-        compartilharBtn.disabled = true;
-        
-        const response = await fetch('/api/relatorio-json', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                sala: salaAtual,
-                data: data
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Erro ao carregar relatório');
-        }
-        
-        const relatorio = await response.json();
-        
-        let texto = `📊 RELATÓRIO DE FALTAS\n`;
-        texto += `Sala: ${relatorio.sala}\n`;
-        texto += `Data: ${new Date(relatorio.data).toLocaleDateString('pt-BR')}\n`;
-        texto += `Total de faltas: ${relatorio.totalFaltas}\n\n`;
-        
-        if (relatorio.totalFaltas > 0) {
-            relatorio.faltas.forEach((falta, index) => {
-                texto += `${index + 1}. ${falta.aluno} (${falta.registradoPor}) - ${falta.dataRegistro}\n`;
-            });
-        } else {
-            texto += 'Nenhuma falta registrada nesta data.';
-        }
-        
-        // Usar Web Share API se disponível
-        if (navigator.share) {
-            await navigator.share({
-                title: 'Relatório de Faltas',
-                text: texto
-            });
-        } else {
-            // Fallback: copiar para clipboard
-            await navigator.clipboard.writeText(texto);
-            alert('✅ Relatório copiado para a área de transferência!');
-        }
-        
-    } catch (error) {
-        if (error.name !== 'AbortError') {
-            console.error('Erro ao compartilhar:', error);
-            alert('❌ Erro ao compartilhar relatório');
-        }
-    } finally {
-        compartilharBtn.textContent = '📤 Compartilhar';
-        compartilharBtn.disabled = false;
     }
 }
 
