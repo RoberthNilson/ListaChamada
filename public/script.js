@@ -49,20 +49,27 @@ const adminRelatorioContent = document.getElementById('adminRelatorioContent');
 const adminSalasList = document.getElementById('adminSalasList');
 
 // Configurar data atual
-dataChamada.valueAsDate = new Date();
-adminRelatorioData.valueAsDate = new Date();
+if (dataChamada) dataChamada.valueAsDate = new Date();
+if (adminRelatorioData) adminRelatorioData.valueAsDate = new Date();
 
 // Eventos
-loginForm.addEventListener('submit', fazerLogin);
-logoutBtn.addEventListener('click', fazerLogout);
-logoutBtnAdmin.addEventListener('click', fazerLogout);
-gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
-adminCriarSalaBtn.addEventListener('click', criarOuAtualizarSalaAdmin);
-adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunosAdmin);
-adminDeletarSalaBtn.addEventListener('click', deletarSalaAdmin);
-adminVerRelatorioBtn.addEventListener('click', mostrarRelatorioAdmin);
+if (loginForm) loginForm.addEventListener('submit', fazerLogin);
+if (logoutBtn) logoutBtn.addEventListener('click', fazerLogout);
+if (logoutBtnAdmin) logoutBtnAdmin.addEventListener('click', fazerLogout);
+if (gerarRelatorioBtn) gerarRelatorioBtn.addEventListener('click', gerarRelatorioExcel);
+if (adminCriarSalaBtn) adminCriarSalaBtn.addEventListener('click', criarOuAtualizarSalaAdmin);
+if (adminAdicionarAlunoBtn) adminAdicionarAlunoBtn.addEventListener('click', adicionarAlunosAdmin);
+if (adminDeletarSalaBtn) adminDeletarSalaBtn.addEventListener('click', deletarSalaAdmin);
+if (adminVerRelatorioBtn) adminVerRelatorioBtn.addEventListener('click', mostrarRelatorioAdmin);
+if (dataChamada) dataChamada.addEventListener('change', () => {
+    if (salaAtual) {
+        renderizarListaAlunos();
+        carregarFaltas();
+    }
+});
 
-// Funções de Autenticação
+// ==================== FUNÇÕES DE AUTENTICAÇÃO ====================
+
 async function fazerLogin(e) {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -83,25 +90,25 @@ async function fazerLogin(e) {
             salaAtual = data.sala;
 
             if (isAdminCargo(cargoAtual)) {
-                userNameAdmin.textContent = usuarioAtual;
-                userCargoAdmin.textContent = '👩‍💼 Gestor(a)';
+                if (userNameAdmin) userNameAdmin.textContent = usuarioAtual;
+                if (userCargoAdmin) userCargoAdmin.textContent = '👩‍💼 Gestor(a)';
                 await carregarAdminDados();
                 loginScreen.classList.remove('active');
                 adminScreen.classList.add('active');
             } else {
-                userName.textContent = usuarioAtual;
-                userCargo.textContent = getCargoNome(cargoAtual);
-                salaTitle.textContent = data.nomeSala;
+                if (userName) userName.textContent = usuarioAtual;
+                if (userCargo) userCargo.textContent = getCargoNome(cargoAtual);
+                if (salaTitle) salaTitle.textContent = data.nomeSala;
                 await carregarDados();
                 loginScreen.classList.remove('active');
                 mainScreen.classList.add('active');
             }
         } else {
-            loginError.textContent = data.message;
+            if (loginError) loginError.textContent = data.message;
         }
     } catch (error) {
         console.error('Erro no login:', error);
-        loginError.textContent = 'Erro ao conectar ao servidor';
+        if (loginError) loginError.textContent = 'Erro ao conectar ao servidor';
     }
 }
 
@@ -125,6 +132,8 @@ function getCargoNome(cargo) {
     return cargos[valor] || cargo;
 }
 
+// ==================== FUNÇÕES ADMIN ====================
+
 async function carregarAdminDados() {
     try {
         const response = await fetch('/api/admin/salas');
@@ -133,23 +142,27 @@ async function carregarAdminDados() {
 
         atualizarAdminSalaSelects(salasArray);
         renderizarSalasAdmin(salasArray);
-        adminSalaMessage.textContent = '';
-        adminAlunoMessage.textContent = '';
-        adminRelatorioContent.innerHTML = '<div class="sem-faltas">Selecione uma sala e data para ver o relatório.</div>';
+        
+        if (adminSalaMessage) adminSalaMessage.textContent = '';
+        if (adminAlunoMessage) adminAlunoMessage.textContent = '';
+        if (adminRelatorioContent) adminRelatorioContent.innerHTML = '<div class="sem-faltas">Selecione uma sala e data para ver o relatório.</div>';
     } catch (error) {
         console.error('Erro ao carregar dados do administrador:', error);
-        adminSalaMessage.textContent = 'Erro ao carregar dados de administração';
+        if (adminSalaMessage) adminSalaMessage.textContent = 'Erro ao carregar dados de administração';
     }
 }
 
 function atualizarAdminSalaSelects(salas) {
     const options = salas.map(sala => `<option value="${sala.id}">${sala.nome} (${sala.id})</option>`).join('');
-    adminAlunoSala.innerHTML = options;
-    adminRelatorioSala.innerHTML = options;
-    adminDeletarSala.innerHTML = options;
+    
+    if (adminAlunoSala) adminAlunoSala.innerHTML = options;
+    if (adminRelatorioSala) adminRelatorioSala.innerHTML = options;
+    if (adminDeletarSala) adminDeletarSala.innerHTML = options;
 }
 
 function renderizarSalasAdmin(salas) {
+    if (!adminSalasList) return;
+    
     if (salas.length === 0) {
         adminSalasList.innerHTML = '<div class="sem-faltas">Nenhuma sala cadastrada.</div>';
         return;
@@ -157,15 +170,15 @@ function renderizarSalasAdmin(salas) {
 
     adminSalasList.innerHTML = salas.map(sala => {
         const alunosTexto = sala.alunos && sala.alunos.length > 0
-            ? sala.alunos.map(nome => `<li>${nome}</li>`).join('')
+            ? sala.alunos.map(nome => `<li>${escapeHtml(nome)}</li>`).join('')
             : '<li>Nenhum aluno cadastrado</li>';
 
         return `
             <div class="admin-card">
-                <strong>${sala.nome} (${sala.id})</strong>
-                <p>Presidente: ${sala.lider}</p>
-                <p>Vice-Presidente: ${sala.viceLider}</p>
-                <p>Secretário: ${sala.secretario}</p>
+                <strong>${escapeHtml(sala.nome)} (${escapeHtml(sala.id)})</strong>
+                <p>Presidente: ${escapeHtml(sala.lider)}</p>
+                <p>Vice-Presidente: ${escapeHtml(sala.viceLider)}</p>
+                <p>Secretário: ${escapeHtml(sala.secretario)}</p>
                 <p><strong>Alunos:</strong></p>
                 <ul>${alunosTexto}</ul>
             </div>
@@ -174,18 +187,21 @@ function renderizarSalasAdmin(salas) {
 }
 
 async function criarOuAtualizarSalaAdmin() {
-    const salaId = adminSalaId.value.trim();
-    const nomeSala = adminSalaNome.value.trim();
-    const lider = adminLider.value.trim();
-    const liderSenha = adminLiderSenha.value.trim();
-    const viceLider = adminViceLider.value.trim();
-    const viceLiderSenha = adminViceLiderSenha.value.trim();
-    const secretario = adminSecretario.value.trim();
-    const secretarioSenha = adminSecretarioSenha.value.trim();
+    const salaId = adminSalaId ? adminSalaId.value.trim() : '';
+    const nomeSala = adminSalaNome ? adminSalaNome.value.trim() : '';
+    const lider = adminLider ? adminLider.value.trim() : '';
+    const liderSenha = adminLiderSenha ? adminLiderSenha.value.trim() : '';
+    const viceLider = adminViceLider ? adminViceLider.value.trim() : '';
+    const viceLiderSenha = adminViceLiderSenha ? adminViceLiderSenha.value.trim() : '';
+    const secretario = adminSecretario ? adminSecretario.value.trim() : '';
+    const secretarioSenha = adminSecretarioSenha ? adminSecretarioSenha.value.trim() : '';
     const alunos = [];
 
     if (!salaId || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
-        adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
+        if (adminSalaMessage) {
+            adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
+            adminSalaMessage.style.color = '#e74c3c';
+        }
         return;
     }
 
@@ -209,26 +225,52 @@ async function criarOuAtualizarSalaAdmin() {
         const data = await response.json();
 
         if (!response.ok) {
-            adminSalaMessage.textContent = data.error || 'Erro ao criar ou atualizar a sala.';
+            if (adminSalaMessage) {
+                adminSalaMessage.textContent = data.error || 'Erro ao criar ou atualizar a sala.';
+                adminSalaMessage.style.color = '#e74c3c';
+            }
             return;
         }
 
-        adminSalaMessage.textContent = 'Sala criada/atualizada com sucesso!';
-        adminSalaMessage.style.color = '#27ae60';
+        if (adminSalaMessage) {
+            adminSalaMessage.textContent = 'Sala criada/atualizada com sucesso!';
+            adminSalaMessage.style.color = '#27ae60';
+        }
+        
+        // Limpar campos
+        if (adminSalaId) adminSalaId.value = '';
+        if (adminSalaNome) adminSalaNome.value = '';
+        if (adminLider) adminLider.value = '';
+        if (adminLiderSenha) adminLiderSenha.value = '';
+        if (adminViceLider) adminViceLider.value = '';
+        if (adminViceLiderSenha) adminViceLiderSenha.value = '';
+        if (adminSecretario) adminSecretario.value = '';
+        if (adminSecretarioSenha) adminSecretarioSenha.value = '';
+        
         await carregarAdminDados();
+        
+        setTimeout(() => {
+            if (adminSalaMessage) adminSalaMessage.textContent = '';
+        }, 3000);
+        
     } catch (error) {
         console.error('Erro ao criar sala:', error);
-        adminSalaMessage.textContent = 'Erro ao criar ou atualizar a sala.';
-        adminSalaMessage.style.color = '#e74c3c';
+        if (adminSalaMessage) {
+            adminSalaMessage.textContent = 'Erro ao criar ou atualizar a sala.';
+            adminSalaMessage.style.color = '#e74c3c';
+        }
     }
 }
 
 async function adicionarAlunosAdmin() {
-    const sala = adminAlunoSala.value;
-    const alunosTexto = adminAlunosLista.value.trim();
+    const sala = adminAlunoSala ? adminAlunoSala.value : '';
+    const alunosTexto = adminAlunosLista ? adminAlunosLista.value.trim() : '';
 
     if (!sala) {
-        adminAlunoMessage.textContent = 'Selecione uma sala.';
+        if (adminAlunoMessage) {
+            adminAlunoMessage.textContent = 'Selecione uma sala.';
+            adminAlunoMessage.style.color = '#e74c3c';
+        }
         return;
     }
 
@@ -238,7 +280,10 @@ async function adicionarAlunosAdmin() {
         .filter(Boolean);
 
     if (alunos.length === 0) {
-        adminAlunoMessage.textContent = 'Digite pelo menos um nome de aluno.';
+        if (adminAlunoMessage) {
+            adminAlunoMessage.textContent = 'Digite pelo menos um nome de aluno.';
+            adminAlunoMessage.style.color = '#e74c3c';
+        }
         return;
     }
 
@@ -251,26 +296,42 @@ async function adicionarAlunosAdmin() {
 
         const data = await response.json();
         if (!response.ok) {
-            adminAlunoMessage.textContent = data.error || 'Erro ao adicionar alunos.';
+            if (adminAlunoMessage) {
+                adminAlunoMessage.textContent = data.error || 'Erro ao adicionar alunos.';
+                adminAlunoMessage.style.color = '#e74c3c';
+            }
             return;
         }
 
-        adminAlunoMessage.textContent = data.message || `${alunos.length} aluno(s) adicionado(s) com sucesso!`;
-        adminAlunoMessage.style.color = '#27ae60';
-        adminAlunosLista.value = '';
+        if (adminAlunoMessage) {
+            adminAlunoMessage.textContent = data.message || `${alunos.length} aluno(s) adicionado(s) com sucesso!`;
+            adminAlunoMessage.style.color = '#27ae60';
+        }
+        
+        if (adminAlunosLista) adminAlunosLista.value = '';
         await carregarAdminDados();
+        
+        setTimeout(() => {
+            if (adminAlunoMessage) adminAlunoMessage.textContent = '';
+        }, 3000);
+        
     } catch (error) {
         console.error('Erro ao adicionar alunos:', error);
-        adminAlunoMessage.textContent = 'Erro ao adicionar alunos.';
-        adminAlunoMessage.style.color = '#e74c3c';
+        if (adminAlunoMessage) {
+            adminAlunoMessage.textContent = 'Erro ao adicionar alunos.';
+            adminAlunoMessage.style.color = '#e74c3c';
+        }
     }
 }
 
 async function deletarSalaAdmin() {
-    const sala = adminDeletarSala.value;
+    const sala = adminDeletarSala ? adminDeletarSala.value : '';
 
     if (!sala) {
-        adminDeletarMessage.textContent = 'Selecione uma sala para deletar.';
+        if (adminDeletarMessage) {
+            adminDeletarMessage.textContent = 'Selecione uma sala para deletar.';
+            adminDeletarMessage.style.color = '#e74c3c';
+        }
         return;
     }
 
@@ -287,26 +348,52 @@ async function deletarSalaAdmin() {
 
         const data = await response.json();
         if (!response.ok) {
-            adminDeletarMessage.textContent = data.error || 'Erro ao deletar sala.';
+            if (adminDeletarMessage) {
+                adminDeletarMessage.textContent = data.error || 'Erro ao deletar sala.';
+                adminDeletarMessage.style.color = '#e74c3c';
+            }
             return;
         }
 
-        adminDeletarMessage.textContent = 'Sala deletada com sucesso!';
-        adminDeletarMessage.style.color = '#27ae60';
+        if (adminDeletarMessage) {
+            adminDeletarMessage.textContent = 'Sala deletada com sucesso!';
+            adminDeletarMessage.style.color = '#27ae60';
+        }
+        
         await carregarAdminDados();
+        
+        setTimeout(() => {
+            if (adminDeletarMessage) adminDeletarMessage.textContent = '';
+        }, 3000);
+        
     } catch (error) {
         console.error('Erro ao deletar sala:', error);
-        adminDeletarMessage.textContent = 'Erro ao deletar sala.';
-        adminDeletarMessage.style.color = '#e74c3c';
+        if (adminDeletarMessage) {
+            adminDeletarMessage.textContent = 'Erro ao deletar sala.';
+            adminDeletarMessage.style.color = '#e74c3c';
+        }
     }
 }
+
+// ==================== FUNÇÃO DE RELATÓRIO ADMIN (CORRIGIDA) ====================
+
+async function mostrarRelatorioAdmin() {
+    // Validação dos elementos
+    if (!adminRelatorioSala || !adminRelatorioData || !adminRelatorioContent) {
+        console.error('Elementos do DOM não encontrados');
+        return;
+    }
+
     const sala = adminRelatorioSala.value;
     const data = adminRelatorioData.value;
 
     if (!sala || !data) {
-        adminRelatorioContent.innerHTML = '<div class="sem-faltas">Selecione sala e data para ver o relatório.</div>';
+        adminRelatorioContent.innerHTML = '<div class="sem-faltas">⚠️ Selecione sala e data para ver o relatório.</div>';
         return;
     }
+
+    // Mostrar loading
+    adminRelatorioContent.innerHTML = '<div class="sem-faltas">⏳ Carregando relatório...</div>';
 
     try {
         const response = await fetch('/api/admin/relatorio-faltas', {
@@ -316,44 +403,57 @@ async function deletarSalaAdmin() {
         });
 
         const payload = await response.json();
+        
         if (!response.ok) {
-            adminRelatorioContent.innerHTML = `<div class="sem-faltas">${payload.error || 'Erro ao buscar relatório.'}</div>`;
+            throw new Error(payload.error || 'Erro ao buscar relatório');
+        }
+
+        if (!payload.faltas || payload.faltas.length === 0) {
+            adminRelatorioContent.innerHTML = '<div class="sem-faltas">✅ Nenhuma falta registrada nesta data.</div>';
             return;
         }
 
-        if (!Array.isArray(payload.faltas) || payload.faltas.length === 0) {
-            adminRelatorioContent.innerHTML = '<div class="sem-faltas">Nenhuma falta registrada nesta data.</div>';
-            return;
-        }
-
-        adminRelatorioContent.innerHTML = payload.faltas.map(falta => `
-            <div class="falta-item">
-                <strong>📌 ${falta.aluno}</strong>
-                <p><small>👔 Registrado por: ${falta.registradoPor}</small></p>
-                <p><small>🕒 ${new Date(falta.dataRegistro).toLocaleString('pt-BR')}</small></p>
+        // Renderizar relatório
+        adminRelatorioContent.innerHTML = `
+            <div class="relatorio-header" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
+                <p><strong>📅 Data:</strong> ${escapeHtml(data)}</p>
+                <p><strong>📊 Total de Faltas:</strong> ${payload.faltas.length}</p>
             </div>
-        `).join('');
+            ${payload.faltas.map(falta => `
+                <div class="falta-item">
+                    <strong>📌 ${escapeHtml(falta.aluno)}</strong>
+                    <p><small>👔 Registrado por: ${escapeHtml(falta.registradoPor)}</small></p>
+                    <p><small>🕒 ${new Date(falta.dataRegistro).toLocaleString('pt-BR')}</small></p>
+                </div>
+            `).join('')}
+        `;
+        
     } catch (error) {
         console.error('Erro ao consultar relatório admin:', error);
-        adminRelatorioContent.innerHTML = '<div class="sem-faltas">Erro ao buscar relatório.</div>';
+        adminRelatorioContent.innerHTML = `<div class="sem-faltas">❌ Erro ao buscar relatório: ${error.message}</div>`;
     }
 }
+
+// ==================== FUNÇÕES DE LOGOUT ====================
 
 function fazerLogout() {
     usuarioAtual = null;
     cargoAtual = null;
     salaAtual = null;
-    loginScreen.classList.add('active');
-    mainScreen.classList.remove('active');
-    adminScreen.classList.remove('active');
-    loginForm.reset();
-    loginError.textContent = '';
-    adminSalaMessage.textContent = '';
-    adminAlunoMessage.textContent = '';
-    adminDeletarMessage.textContent = '';
+    
+    if (loginScreen) loginScreen.classList.add('active');
+    if (mainScreen) mainScreen.classList.remove('active');
+    if (adminScreen) adminScreen.classList.remove('active');
+    
+    if (loginForm) loginForm.reset();
+    if (loginError) loginError.textContent = '';
+    if (adminSalaMessage) adminSalaMessage.textContent = '';
+    if (adminAlunoMessage) adminAlunoMessage.textContent = '';
+    if (adminDeletarMessage) adminDeletarMessage.textContent = '';
 }
 
-// Carregar dados da sala
+// ==================== FUNÇÕES DE CHAMADA ====================
+
 async function carregarDados() {
     try {
         const response = await fetch('/api/carregar-chamada', {
@@ -374,9 +474,10 @@ async function carregarDados() {
     }
 }
 
-// Renderizar lista de alunos
 function renderizarListaAlunos() {
-    const dataAtual = dataChamada.value;
+    if (!alunosList) return;
+    
+    const dataAtual = dataChamada ? dataChamada.value : new Date().toISOString().split('T')[0];
     
     alunosList.innerHTML = alunosAtuais.map(aluno => {
         const temFalta = faltasAtuais[dataAtual] && faltasAtuais[dataAtual][aluno];
@@ -384,10 +485,10 @@ function renderizarListaAlunos() {
         return `
             <div class="aluno-item">
                 <span class="aluno-nome">
-                    ${aluno}
+                    ${escapeHtml(aluno)}
                     ${temFalta ? '<span class="falta-registrada">✓ Falta registrada</span>' : ''}
                 </span>
-                <button class="btn-falta" onclick="registrarFalta('${aluno}')" ${temFalta ? 'disabled' : ''}>
+                <button class="btn-falta" onclick="registrarFalta('${escapeHtml(aluno).replace(/'/g, "\\'")}')" ${temFalta ? 'disabled' : ''}>
                     ✗ Registrar Falta
                 </button>
             </div>
@@ -395,9 +496,9 @@ function renderizarListaAlunos() {
     }).join('');
 }
 
-// Registrar falta
+// Registrar falta (função global)
 window.registrarFalta = async (aluno) => {
-    const dataAtual = dataChamada.value;
+    const dataAtual = dataChamada ? dataChamada.value : new Date().toISOString().split('T')[0];
     
     if (faltasAtuais[dataAtual] && faltasAtuais[dataAtual][aluno]) {
         alert('⚠️ Este aluno já possui falta registrada nesta data!');
@@ -446,10 +547,11 @@ window.registrarFalta = async (aluno) => {
     }
 };
 
-// Carregar e exibir faltas
 async function carregarFaltas() {
-    const dataAtual = dataChamada.value;
     const relatorioContent = document.getElementById('relatorioContent');
+    if (!relatorioContent) return;
+    
+    const dataAtual = dataChamada ? dataChamada.value : new Date().toISOString().split('T')[0];
     
     const faltasData = faltasAtuais[dataAtual] || {};
     const faltasList = Object.entries(faltasData);
@@ -461,27 +563,28 @@ async function carregarFaltas() {
     
     relatorioContent.innerHTML = `
         <div class="relatorio-header" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px;">
-            <p><strong>📅 Data:</strong> ${dataAtual}</p>
+            <p><strong>📅 Data:</strong> ${escapeHtml(dataAtual)}</p>
             <p><strong>📊 Total de Faltas:</strong> ${faltasList.length}</p>
         </div>
         ${faltasList.map(([aluno, info]) => `
             <div class="falta-item">
-                <strong>📌 ${aluno}</strong>
-                <p><small>👔 Registrado por: ${info.registradoPor}</small></p>
+                <strong>📌 ${escapeHtml(aluno)}</strong>
+                <p><small>👔 Registrado por: ${escapeHtml(info.registradoPor)}</small></p>
                 <p><small>🕒 Data registro: ${new Date(info.dataRegistro).toLocaleString('pt-BR')}</small></p>
             </div>
         `).join('')}
     `;
 }
 
-// Gerar relatório em Excel
 async function gerarRelatorioExcel() {
-    const data = dataChamada.value;
+    const data = dataChamada ? dataChamada.value : null;
     
     if (!data) {
         alert('⚠️ Selecione uma data para gerar o relatório!');
         return;
     }
+    
+    if (!gerarRelatorioBtn) return;
     
     try {
         gerarRelatorioBtn.textContent = '⏳ Gerando...';
@@ -521,12 +624,13 @@ async function gerarRelatorioExcel() {
     }
 }
 
-// Atualizar ao mudar a data
-dataChamada.addEventListener('change', () => {
-    if (salaAtual) {
-        renderizarListaAlunos();
-        carregarFaltas();
-    }
-});
+// ==================== FUNÇÃO AUXILIAR ====================
 
-console.log('✅ Sistema de Chamada carregado!');
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+console.log('✅ Sistema de Chamada carregado e atualizado!');
