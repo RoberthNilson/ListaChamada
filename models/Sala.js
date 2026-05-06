@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 const SalaSchema = new mongoose.Schema({
-    id: { type: String, required: true, unique: true },
+    curso: { type: String, required: true, unique: true },
     nome: { type: String, required: true },
     lider: { type: String, required: true },
     viceLider: { type: String, required: true },

@@ -22,7 +22,7 @@ const gerarRelatorioBtn = document.getElementById('gerarRelatorioBtn');
 const dataChamada = document.getElementById('dataChamada');
 const loginError = document.getElementById('loginError');
 
-const adminSalaId = document.getElementById('adminSalaId');
+const adminSalaCurso = document.getElementById('adminSalaCurso');
 const adminSalaNome = document.getElementById('adminSalaNome');
 const adminLider = document.getElementById('adminLider');
 const adminLiderSenha = document.getElementById('adminLiderSenha');
@@ -199,7 +199,7 @@ async function carregarAdminDados() {
 }
 
 function atualizarAdminSalaSelects(salas) {
-    const options = salas.map(sala => `<option value="${sala.id}">${sala.nome} (${sala.id})</option>`).join('');
+    const options = salas.map(sala => `<option value="${sala.curso}">${sala.nome} (${sala.curso})</option>`).join('');
     
     if (adminAlunoSala) adminAlunoSala.innerHTML = options;
     if (adminRelatorioSala) adminRelatorioSala.innerHTML = options;
@@ -221,7 +221,7 @@ function renderizarSalasAdmin(salas) {
 
         return `
             <div class="admin-card">
-                <strong>${escapeHtml(sala.nome)} (${escapeHtml(sala.id)})</strong>
+                <strong>${escapeHtml(sala.nome)} (${escapeHtml(sala.curso)})</strong>
                 <p>Presidente: ${escapeHtml(sala.lider)}</p>
                 <p>Vice-Presidente: ${escapeHtml(sala.viceLider)}</p>
                 <p>Secretário: ${escapeHtml(sala.secretario)}</p>
@@ -233,7 +233,7 @@ function renderizarSalasAdmin(salas) {
 }
 
 async function criarOuAtualizarSalaAdmin() {
-    const salaId = adminSalaId ? adminSalaId.value.trim() : '';
+    const salaCurso = adminSalaCurso ? adminSalaCurso.value.trim() : '';
     const nomeSala = adminSalaNome ? adminSalaNome.value.trim() : '';
     const lider = adminLider ? adminLider.value.trim() : '';
     const liderSenha = adminLiderSenha ? adminLiderSenha.value.trim() : '';
@@ -243,7 +243,7 @@ async function criarOuAtualizarSalaAdmin() {
     const secretarioSenha = adminSecretarioSenha ? adminSecretarioSenha.value.trim() : '';
     const alunos = [];
 
-    if (!salaId || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
+    if (!salaCurso || !nomeSala || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
         if (adminSalaMessage) {
             adminSalaMessage.textContent = 'Preencha todos os campos obrigatórios para criar a sala.';
             adminSalaMessage.style.color = '#e74c3c';
@@ -256,7 +256,7 @@ async function criarOuAtualizarSalaAdmin() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                id: salaId,
+                curso: salaCurso,
                 nome: nomeSala,
                 lider,
                 liderSenha,
@@ -284,7 +284,7 @@ async function criarOuAtualizarSalaAdmin() {
         }
         
         // Limpar campos
-        if (adminSalaId) adminSalaId.value = '';
+        if (adminSalaCurso) adminSalaCurso.value = '';
         if (adminSalaNome) adminSalaNome.value = '';
         if (adminLider) adminLider.value = '';
         if (adminLiderSenha) adminLiderSenha.value = '';

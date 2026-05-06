@@ -105,7 +105,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const user = await User.findOne({ username });
         if (user && user.senha === password) {
-            const salaDoc = await Sala.findOne({ id: user.sala });
+            const salaDoc = await Sala.findOne({ curso: user.sala });
             const cargoRaw = String(user.cargo || '').trim().toLowerCase();
             const cargoNormalizado = cargoRaw === 'adimin' ? 'admin' : cargoRaw;
 
@@ -158,7 +158,7 @@ app.get('/api/admin/salas', async (req, res) => {
 
 app.post('/api/admin/criar-sala', async (req, res) => {
     const {
-        id,
+        curso,
         nome,
         lider,
         liderSenha,
@@ -169,15 +169,15 @@ app.post('/api/admin/criar-sala', async (req, res) => {
         alunos = []
     } = req.body;
 
-    if (!id || !nome || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
+    if (!curso || !nome || !lider || !liderSenha || !viceLider || !viceLiderSenha || !secretario || !secretarioSenha) {
         return res.status(400).json({ error: 'Todos os campos da sala e dos cargos são obrigatórios.' });
     }
 
     try {
         await Sala.findOneAndUpdate(
-            { id },
+            { curso },
             {
-                id,
+                curso,
                 nome,
                 lider,
                 viceLider,
@@ -189,19 +189,19 @@ app.post('/api/admin/criar-sala', async (req, res) => {
 
         await User.findOneAndUpdate(
             { username: lider },
-            { username: lider, senha: liderSenha, sala: id, cargo: 'lider' },
+            { username: lider, senha: liderSenha, sala: curso, cargo: 'lider' },
             { upsert: true, new: true }
         );
 
         await User.findOneAndUpdate(
             { username: viceLider },
-            { username: viceLider, senha: viceLiderSenha, sala: id, cargo: 'viceLider' },
+            { username: viceLider, senha: viceLiderSenha, sala: curso, cargo: 'viceLider' },
             { upsert: true, new: true }
         );
 
         await User.findOneAndUpdate(
             { username: secretario },
-            { username: secretario, senha: secretarioSenha, sala: id, cargo: 'secretario' },
+            { username: secretario, senha: secretarioSenha, sala: curso, cargo: 'secretario' },
             { upsert: true, new: true }
         );
 
@@ -210,13 +210,13 @@ app.post('/api/admin/criar-sala', async (req, res) => {
             if (!alunoTrim) continue;
 
             await Sala.updateOne(
-                { id },
+                { curso },
                 { $addToSet: { alunos: alunoTrim } }
             );
 
             await User.findOneAndUpdate(
                 { username: alunoTrim },
-                { username: alunoTrim, senha: alunoTrim, sala: id, cargo: 'aluno' },
+                { username: alunoTrim, senha: alunoTrim, sala: curso, cargo: 'aluno' },
                 { upsert: true, new: true }
             );
         }
@@ -235,14 +235,14 @@ app.delete('/api/admin/deletar-sala', async (req, res) => {
     }
 
     try {
-        const salaDoc = await Sala.findOne({ id: sala });
+        const salaDoc = await Sala.findOne({ curso: sala });
         if (!salaDoc) {
             return res.status(404).json({ error: 'Sala não encontrada.' });
         }
 
         await User.deleteMany({ sala });
-        await Falta.deleteMany({ salaId: sala });
-        await Sala.deleteOne({ id: sala });
+        await Falta.deleteMany({ salaCurso: sala });
+        await Sala.deleteOne({ curso: sala });
 
         res.json({ success: true });
     } catch (error) {
@@ -258,7 +258,7 @@ app.post('/api/admin/adicionar-alunos', async (req, res) => {
     }
 
     try {
-        const salaDoc = await Sala.findOne({ id: sala });
+        const salaDoc = await Sala.findOne({ curso: sala });
         if (!salaDoc) {
             return res.status(404).json({ error: 'Sala não encontrada.' });
         }
@@ -335,11 +335,11 @@ app.post('/api/carregar-chamada', async (req, res) => {
     const { sala } = req.body;
     
     try {
-        const salaDoc = await Sala.findOne({ id: sala });
+        const salaDoc = await Sala.findOne({ curso: sala });
         if (!salaDoc) {
             return res.status(404).json({ error: 'Sala não encontrada' });
         }
-        const faltas = await Falta.find({ salaId: sala });
+        const faltas = await Falta.find({ salaCurso: sala });
         const faltasFormatadas = {};
         
         faltas.forEach(falta => {
@@ -368,7 +368,7 @@ app.post('/api/registrar-falta', async (req, res) => {
     const { sala, aluno, data, registradoPor } = req.body;
     
     try {
-        const salaDoc = await Sala.findOne({ id: sala });
+        const salaDoc = await Sala.findOne({ curso: sala });
         if (!salaDoc) {
             return res.status(404).json({ error: 'Sala não encontrada' });
         }
@@ -383,7 +383,7 @@ app.post('/api/registrar-falta', async (req, res) => {
         dataFim.setHours(23, 59, 59, 999);
         
         const faltaExistente = await Falta.findOne({
-            salaId: sala,
+            salaCurso: sala,
             aluno: aluno,
             data: { $gte: dataInicio, $lte: dataFim }
         });
@@ -393,7 +393,7 @@ app.post('/api/registrar-falta', async (req, res) => {
         }
         
         const novaFalta = await Falta.create({
-            salaId: sala,
+            salaCurso: sala,
             aluno: aluno,
             data: new Date(data),
             registradoPor: registradoPor,
@@ -424,7 +424,7 @@ app.post('/api/buscar-faltas', async (req, res) => {
         dataFim.setHours(23, 59, 59, 999);
         
         const faltas = await Falta.find({
-            salaId: sala,
+            salaCurso: sala,
             data: { $gte: dataInicio, $lte: dataFim }
         });
         
