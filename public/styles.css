@@ -24,6 +24,7 @@ body {
 
 .screen.active {
     display: block;
+    animation: fadeInUp 0.5s ease;
 }
 
 /* Tela de Login */
@@ -64,22 +65,27 @@ body {
     font-weight: 500;
 }
 
-.input-group input {
+.input-group input,
+.input-group select,
+.input-group textarea {
     width: 100%;
     padding: 12px;
     border: 2px solid #e0e0e0;
     border-radius: 10px;
     font-size: 14px;
     transition: all 0.3s;
+    font-family: inherit;
 }
 
-.input-group input:focus {
+.input-group input:focus,
+.input-group select:focus,
+.input-group textarea:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
 }
 
-.btn-login, .btn-primary, .btn-secondary {
+.btn-login, .btn-primary, .btn-secondary, .btn-danger {
     width: 100%;
     padding: 12px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -89,11 +95,16 @@ body {
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: transform 0.2s, opacity 0.2s;
 }
 
-.btn-login:hover, .btn-primary:hover, .btn-secondary:hover {
+.btn-login:hover, .btn-primary:hover, .btn-secondary:hover, .btn-danger:hover {
     transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.btn-login:active, .btn-primary:active, .btn-secondary:active, .btn-danger:active {
+    transform: translateY(0);
 }
 
 .btn-secondary {
@@ -121,6 +132,8 @@ body {
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .header h2 {
@@ -132,6 +145,7 @@ body {
     display: flex;
     gap: 15px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .user-info span {
@@ -190,12 +204,18 @@ body {
     padding: 18px;
     border-radius: 12px;
     margin-bottom: 15px;
+    transition: transform 0.2s;
+}
+
+.admin-card:hover {
+    transform: translateX(5px);
 }
 
 .admin-card strong {
     display: block;
     margin-bottom: 8px;
     color: #333;
+    font-size: 16px;
 }
 
 .admin-card p,
@@ -216,6 +236,8 @@ body {
     margin-bottom: 20px;
     padding-bottom: 15px;
     border-bottom: 2px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .section-header h3 {
@@ -296,7 +318,7 @@ body {
 }
 
 /* Relatório */
-#relatorioContent {
+#relatorioContent, #adminRelatorioContent {
     max-height: 500px;
     overflow-y: auto;
 }
@@ -326,6 +348,23 @@ body {
     color: #27ae60;
     padding: 20px;
     font-weight: 500;
+    background: #f0fdf4;
+    border-radius: 10px;
+}
+
+/* Notificações do Admin */
+.notificacao-card {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin: 10px 0;
+    border-radius: 10px;
+    background: #f9f9f9;
+    transition: transform 0.2s;
+}
+
+.notificacao-card:hover {
+    transform: translateX(-5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
 /* Animações */
@@ -343,6 +382,7 @@ body {
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
 ::-webkit-scrollbar-track {
@@ -359,7 +399,10 @@ body {
     background: #555;
 }
 
-/* Responsividade */
+/* ============================================ */
+/* RESPONSIVIDADE PARA CELULARES */
+/* ============================================ */
+
 @media (max-width: 968px) {
     .content {
         grid-template-columns: 1fr;
@@ -367,12 +410,12 @@ body {
     
     .header {
         flex-direction: column;
-        gap: 15px;
+        text-align: center;
     }
     
     .section-header {
         flex-direction: column;
-        gap: 10px;
+        align-items: flex-start;
     }
     
     .chamada-controls {
@@ -382,14 +425,22 @@ body {
     .chamada-controls input {
         flex: 1;
     }
+    
+    .admin-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-grid .full-width {
+        grid-column: span 1;
+    }
 }
 
-/* Mobile */
 @media (max-width: 600px) {
     .container {
         padding: 10px;
     }
     
+    /* Tela de Login Mobile */
     .login-box {
         padding: 25px;
         margin: 50px auto;
@@ -400,9 +451,29 @@ body {
         font-size: 22px;
     }
     
+    .logo p {
+        font-size: 12px;
+    }
+    
+    .input-group label {
+        font-size: 13px;
+    }
+    
+    .input-group input {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    .btn-login {
+        padding: 12px;
+        font-size: 14px;
+    }
+    
+    /* Header Mobile */
     .header {
         padding: 15px;
         gap: 10px;
+        border-radius: 12px;
     }
     
     .header h2 {
@@ -410,7 +481,7 @@ body {
     }
     
     .user-info {
-        flex-wrap: wrap;
+        justify-content: center;
         gap: 8px;
     }
     
@@ -419,37 +490,15 @@ body {
         padding: 6px 12px;
     }
     
-    .chamada-section, .relatorio-section {
+    .btn-logout {
+        padding: 6px 16px;
+        font-size: 12px;
+    }
+    
+    /* Seções Mobile */
+    .chamada-section, .relatorio-section, .admin-section {
         padding: 15px;
-    }
-    
-    .aluno-item {
-        padding: 12px;
-        margin-bottom: 8px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-    }
-    
-    .aluno-nome {
-        width: 100%;
-        font-size: 14px;
-    }
-    
-    .btn-falta {
-        width: 100%;
-        padding: 10px;
-    }
-    
-    .falta-registrada {
-        margin-left: 0;
-        display: block;
-        margin-top: 5px;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
+        border-radius: 12px;
     }
     
     .section-header h3 {
@@ -460,48 +509,202 @@ body {
     .chamada-controls {
         width: 100%;
         flex-direction: column;
+        gap: 8px;
     }
     
     .chamada-controls input {
         width: 100%;
-    }
-    
-    .btn-primary, .btn-secondary {
-        width: 100%;
-        padding: 12px;
-        margin-bottom: 10px;
+        padding: 10px;
         font-size: 14px;
     }
     
-    #relatorioContent {
+    /* Lista de Alunos Mobile */
+    .aluno-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        border-radius: 8px;
+    }
+    
+    .aluno-nome {
+        width: 100%;
+        font-size: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .falta-registrada {
+        margin-left: 0;
+        margin-top: 5px;
+        font-size: 11px;
+    }
+    
+    .btn-falta {
+        width: 100%;
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    /* Lista de Alunos (scroll suave) */
+    .alunos-list {
         max-height: 400px;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Relatório Mobile */
+    #relatorioContent, #adminRelatorioContent {
+        max-height: 400px;
+        font-size: 13px;
+    }
+    
+    .falta-item {
+        padding: 10px;
+    }
+    
+    .falta-item strong {
+        font-size: 14px;
+    }
+    
+    .falta-item p {
+        font-size: 12px;
+    }
+    
+    .sem-faltas {
+        padding: 15px;
+        font-size: 13px;
+    }
+    
+    /* Cards Admin Mobile */
+    .admin-card {
+        padding: 12px;
+    }
+    
+    .admin-card strong {
+        font-size: 14px;
+    }
+    
+    .admin-card p, .admin-card ul {
+        font-size: 12px;
+    }
+    
+    .admin-card ul {
+        padding-left: 15px;
+    }
+    
+    /* Notificações Mobile */
+    .notificacao-card {
+        padding: 12px;
+        margin: 8px 0;
+    }
+    
+    /* Botões Mobile */
+    .btn-primary, .btn-secondary, .btn-danger {
+        padding: 12px;
+        font-size: 14px;
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    /* Último botão sem margem */
+    .btn-primary:last-child, .btn-secondary:last-child, .btn-danger:last-child {
+        margin-bottom: 0;
+    }
+    
+    /* Ajuste de grid admin para mobile */
+    .admin-grid {
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+    
+    /* Selects e textareas mobile */
+    .input-group select,
+    .input-group textarea {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    /* Loading e mensagens */
+    .error-message {
+        font-size: 12px;
+        margin-top: 10px;
+    }
+}
+
+/* Ajustes para telas muito pequenas (até 380px) */
+@media (max-width: 380px) {
+    .container {
+        padding: 8px;
+    }
+    
+    .header h2 {
+        font-size: 16px;
+    }
+    
+    .user-info span {
+        font-size: 11px;
+        padding: 5px 10px;
+    }
+    
+    .aluno-nome {
+        font-size: 13px;
+    }
+    
+    .btn-falta {
+        padding: 8px;
+        font-size: 13px;
+    }
+    
+    .section-header h3 {
+        font-size: 14px;
+    }
+}
+
+/* Touch improvements para celular */
+@media (max-width: 768px) {
+    button, 
+    .btn-login, 
+    .btn-primary, 
+    .btn-secondary, 
+    .btn-danger, 
+    .btn-logout,
+    .btn-falta {
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+    }
+    
+    button:active,
+    .btn-login:active, 
+    .btn-primary:active, 
+    .btn-secondary:active, 
+    .btn-danger:active,
+    .btn-falta:active {
+        transform: scale(0.97);
+    }
+    
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}
+
+/* Landscape mode para celular */
+@media (max-width: 900px) and (orientation: landscape) {
+    .container {
+        padding: 10px;
     }
     
     .alunos-list {
-        max-height: 400px;
+        max-height: 300px;
     }
     
-    /* Tabela responsiva para mobile */
-    .relatorio-table {
-        width: 100%;
-        font-size: 12px;
-        border-collapse: collapse;
+    .content {
+        gap: 10px;
     }
     
-    .relatorio-table th,
-    .relatorio-table td {
-        padding: 8px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-    
-    .relatorio-table th {
-        background: #667eea;
-        color: white;
-        font-weight: 600;
-    }
-    
-    .relatorio-table tr:nth-child(even) {
-        background: #f9f9f9;
+    .admin-section {
+        padding: 12px;
     }
 }

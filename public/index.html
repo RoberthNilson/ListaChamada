@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Sistema de Chamada - Iema Pleno Carolina</title>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -112,11 +112,11 @@
 
                 <div class="admin-section">
                     <div class="section-header">
-                        <h3>Relatório de Faltas por Sala</h3>
+                        <h3>📊 Relatório de Faltas por Sala</h3>
                     </div>
                     <div class="admin-grid">
                         <div class="input-group">
-                            <label for="adminRelatorioSala">Sala</label>
+                            <label for="adminRelatorioSala">Selecione a Sala</label>
                             <select id="adminRelatorioSala"></select>
                         </div>
                         <div class="input-group">
@@ -124,20 +124,20 @@
                             <input type="date" id="adminRelatorioData">
                         </div>
                     </div>
-                    <button id="adminVerRelatorioBtn" class="btn-secondary">Ver Faltas</button>
+                    <button id="adminVerRelatorioBtn" class="btn-secondary">🔍 Ver Faltas da Sala</button>
                     <div id="adminRelatorioContent"></div>
                 </div>
 
                 <div class="admin-section">
                     <div class="section-header">
-                        <h3>Salas Cadastradas</h3>
+                        <h3>📋 Salas Cadastradas</h3>
                     </div>
                     <div id="adminSalasList"></div>
                 </div>
 
                 <div class="admin-section">
                     <div class="section-header">
-                        <h3>Deletar Sala</h3>
+                        <h3>🗑️ Deletar Sala</h3>
                     </div>
                     <div class="admin-grid">
                         <div class="input-group">
@@ -151,7 +151,7 @@
             </div>
         </div>
 
-        <!-- Tela Principal do Sistema -->
+        <!-- Tela Principal do Sistema (Presidente/Vice/Secretário) -->
         <div id="mainScreen" class="screen">
             <div class="header">
                 <h2 id="salaTitle">Sistema de Chamada</h2>
@@ -165,7 +165,7 @@
             <div class="content">
                 <div class="chamada-section">
                     <div class="section-header">
-                        <h3>Lista de Alunos</h3>
+                        <h3>📝 Lista de Alunos</h3>
                         <div class="chamada-controls">
                             <input type="date" id="dataChamada">
                         </div>
@@ -178,7 +178,7 @@
 
                 <div class="relatorio-section">
                     <div class="section-header">
-                        <h3>Registro de Faltas</h3>
+                        <h3>📊 Registro de Faltas</h3>
                         <button id="gerarRelatorioBtn" class="btn-secondary">📤 Enviar Relatório ao Admin</button>
                     </div>
                     <div id="relatorioContent"></div>
